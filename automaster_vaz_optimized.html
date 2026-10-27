@@ -1,0 +1,1872 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Интерактивный каталог узлов и оригинальных векторных схем автомобилей ВАЗ/LADA: двигатель, топливная система, охлаждение, КПП, кузов и электрика.">
+  <meta name="theme-color" content="#090D16">
+  <title>AutoMaster AvtoAll — Каталог схем топливной системы, охлаждения, ДВС, КПП, шасси и кузова ВАЗ / LADA</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap');
+
+    body {
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      background-color: #090D16;
+      color: #E2E8F0;
+    }
+    .font-mono {
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #090D16; }
+    ::-webkit-scrollbar-thumb { background: #26354D; border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: #3B5275; }
+
+    /* Темная миллиметровка CAD */
+    .blueprint-dark {
+      background-color: #0B111E;
+      background-image: 
+        radial-gradient(circle, rgba(56, 189, 248, 0.2) 1px, transparent 1px),
+        linear-gradient(rgba(30, 41, 59, 0.5) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(30, 41, 59, 0.5) 1px, transparent 1px);
+      background-size: 20px 20px, 20px 20px, 20px 20px;
+    }
+
+    /* Светлый бумажный чертёж AvtoAll (ГОСТ) */
+    .blueprint-light {
+      background-color: #F8FAFC;
+      background-image: 
+        linear-gradient(rgba(148, 163, 184, 0.25) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(148, 163, 184, 0.25) 1px, transparent 1px);
+      background-size: 20px 20px;
+    }
+    .blueprint-light svg text { fill: #0F172A !important; }
+    .blueprint-light .svg-part-body { fill: #E2E8F0 !important; stroke: #1E293B !important; }
+    .blueprint-light .svg-part-accent { fill: #CBD5E1 !important; stroke: #0F172A !important; }
+    .blueprint-light .svg-axis { stroke: #DC2626 !important; }
+    .blueprint-light .svg-leader { stroke: #0284C7 !important; }
+
+    /* Интерактивные узлы на схеме автомобиля */
+    .car-node-spot {
+      transition: all 0.2s ease;
+    }
+    .car-node-spot:hover {
+      transform: scale(1.12);
+      filter: drop-shadow(0 0 10px rgba(245, 158, 11, 0.95));
+    }
+
+    :focus-visible { outline: 2px solid #F59E0B; outline-offset: 2px; }
+    button, select, input { touch-action: manipulation; }
+    #mainTechnicalSvg { overflow: visible; }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { scroll-behavior: auto !important; transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; }
+    }
+    @media print {
+      body * { visibility: hidden; }
+      #printModalContent, #printModalContent * { visibility: visible; }
+      #printModalContent {
+        position: absolute; left: 0; top: 0; width: 100%;
+        background: white !important; color: black !important;
+        border: 0 !important; box-shadow: none !important;
+      }
+      #printModalContent button { display: none !important; }
+      #orderModal { background: white !important; }
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col selection:bg-amber-500 selection:text-black">
+
+  <!-- ВЕРХНЯЯ ПАНЕЛЬ (ШАПКА КАТАЛОГА) -->
+  <header class="bg-[#111827] border-b border-[#1F2937] sticky top-0 z-40 shadow-lg">
+    <div class="max-w-[1920px] mx-auto px-4 py-2.5 flex flex-wrap items-center justify-between gap-3">
+      
+      <!-- Бренд -->
+      <div class="flex items-center space-x-3">
+        <div class="w-10 h-10 rounded-xl bg-amber-500/15 border border-amber-500/40 flex items-center justify-center text-amber-500 shadow-inner">
+          <i class="fa-solid fa-compass-drafting text-xl"></i>
+        </div>
+        <div>
+          <div class="flex items-center space-x-2">
+            <span class="font-extrabold text-lg tracking-tight text-white uppercase">Auto<span class="text-amber-500">Master</span></span>
+            <span class="text-[10px] font-mono bg-cyan-950 text-cyan-400 px-2 py-0.5 rounded border border-cyan-800/60 font-semibold">AVTOALL VAZ EPC v4.2</span>
+          </div>
+          <p class="text-[11px] text-slate-400">Полный каталог взрыв-схем питания, охлаждения, ДВС, КПП, шасси, кузова и электрики АвтоВАЗ</p>
+        </div>
+      </div>
+
+      <!-- Сквозной поиск по OEM-артикулу или названию детали -->
+      <div class="flex-1 max-w-md mx-2 order-3 xl:order-2 w-full xl:w-auto">
+        <div class="relative flex items-center">
+          <i class="fa-solid fa-magnifying-glass absolute left-3.5 text-slate-400 text-xs"></i>
+          <input 
+            type="text" 
+            id="globalSearchInput"
+            oninput="onGlobalSearch(this.value)"
+            placeholder="Поиск по OEM или детали (бензонасос, форсунка, дроссель, рампа, помпа)..."
+            class="w-full bg-[#090D16] border border-[#26354D] rounded-lg pl-9 pr-16 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-amber-500 font-mono"
+          >
+          <button onclick="clearGlobalSearch()" class="absolute right-2 px-2 py-1 text-[10px] bg-[#1F2937] hover:bg-[#374151] text-slate-300 rounded">
+            Сброс
+          </button>
+        </div>
+      </div>
+
+      <!-- Переключатели вида (Шасси / Кузов / Электрика / Чертёж узла) и Корзина -->
+      <div class="flex items-center space-x-2 order-2 xl:order-3 text-xs">
+        
+        <div class="bg-[#090D16] p-1 rounded-lg border border-[#26354D] flex items-center">
+          <button id="btnViewCar" onclick="setViewMode('car')" class="px-2.5 py-1 rounded text-xs font-semibold transition-all flex items-center space-x-1.5 text-slate-400 hover:text-white">
+            <i class="fa-solid fa-gears"></i>
+            <span class="hidden sm:inline">Шасси</span>
+          </button>
+          <button id="btnViewBody" onclick="setViewMode('body')" class="px-2.5 py-1 rounded text-xs font-semibold transition-all flex items-center space-x-1.5 text-slate-400 hover:text-white">
+            <i class="fa-solid fa-car-side"></i>
+            <span class="hidden sm:inline">Кузов</span>
+          </button>
+          <button id="btnViewElec" onclick="setViewMode('elec')" class="px-2.5 py-1 rounded text-xs font-semibold transition-all flex items-center space-x-1.5 text-slate-400 hover:text-white">
+            <i class="fa-solid fa-bolt"></i>
+            <span class="hidden sm:inline">Электрика</span>
+          </button>
+          <button id="btnViewPoster" onclick="setViewMode('poster')" class="px-2.5 py-1 rounded text-xs font-semibold transition-all flex items-center space-x-1.5 bg-amber-500 text-black">
+            <i class="fa-solid fa-compass-drafting"></i>
+            <span>Чертёж узла</span>
+          </button>
+        </div>
+
+        <!-- Тема чертежа (Тёмный CAD / Бумажный AvtoAll) -->
+        <button 
+          id="btnBlueprintTheme" 
+          onclick="toggleBlueprintTheme()" 
+          class="px-2.5 py-1.5 bg-[#1F2937] hover:bg-[#374151] border border-[#374151] rounded-lg text-slate-200 flex items-center space-x-1.5"
+          title="Переключить фон чертежа: Тёмный CAD / Светлый бумажный ГОСТ"
+        >
+          <i class="fa-solid fa-scroll text-amber-400"></i>
+          <span id="themeLabel" class="hidden md:inline">Фон: CAD</span>
+        </button>
+
+        <!-- Заказ-наряд -->
+        <button 
+          onclick="openOrderModal()" 
+          class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold rounded-lg flex items-center space-x-1.5 shadow"
+        >
+          <i class="fa-solid fa-clipboard-list"></i>
+          <span class="hidden sm:inline">Наряд</span>
+          <span id="orderCartCount" class="bg-black/40 text-white px-1.5 py-0.2 rounded-full text-[11px] font-mono">0</span>
+        </button>
+
+      </div>
+    </div>
+
+    <!-- Полоса быстрого выбора семейств ВАЗ -->
+    <div class="bg-[#0D1320] border-t border-[#1F2937] px-4 py-1.5 flex items-center space-x-1.5 overflow-x-auto text-xs">
+      <span class="text-slate-500 text-[11px] font-medium mr-1 whitespace-nowrap"><i class="fa-solid fa-layer-group text-amber-500 mr-1"></i>Семейства ВАЗ:</span>
+      <button onclick="filterFamily('all')" class="fam-btn px-2.5 py-1 rounded bg-amber-500 text-black font-bold whitespace-nowrap" data-fam="all">Все модели (23)</button>
+      <button onclick="filterFamily('vesta')" class="fam-btn px-2.5 py-1 rounded bg-[#162032] text-slate-300 hover:bg-[#1E293B] whitespace-nowrap border border-[#26354D]" data-fam="vesta">Vesta NG / XRAY / Largus</button>
+      <button onclick="filterFamily('granta')" class="fam-btn px-2.5 py-1 rounded bg-[#162032] text-slate-300 hover:bg-[#1E293B] whitespace-nowrap border border-[#26354D]" data-fam="granta">Granta FL / Kalina 1-2</button>
+      <button onclick="filterFamily('niva')" class="fam-btn px-2.5 py-1 rounded bg-[#162032] text-slate-300 hover:bg-[#1E293B] whitespace-nowrap border border-[#26354D]" data-fam="niva">Нива 4x4 Legend / Travel</button>
+      <button onclick="filterFamily('samara')" class="fam-btn px-2.5 py-1 rounded bg-[#162032] text-slate-300 hover:bg-[#1E293B] whitespace-nowrap border border-[#26354D]" data-fam="samara">Самара 2108–2115</button>
+      <button onclick="filterFamily('vaz10')" class="fam-btn px-2.5 py-1 rounded bg-[#162032] text-slate-300 hover:bg-[#1E293B] whitespace-nowrap border border-[#26354D]" data-fam="vaz10">Десятка 2110–12 / Priora</button>
+      <button onclick="filterFamily('classic')" class="fam-btn px-2.5 py-1 rounded bg-[#162032] text-slate-300 hover:bg-[#1E293B] whitespace-nowrap border border-[#26354D]" data-fam="classic">Классика 2101–2107</button>
+    </div>
+  </header>
+
+  <!-- ОСНОВНОЙ РАБОЧИЙ ИНТЕРФЕЙС (3 КОЛОНКИ) -->
+  <main class="flex-1 max-w-[1920px] w-full mx-auto p-3 grid grid-cols-1 lg:grid-cols-12 gap-3 overflow-hidden">
+    
+    <!-- ЛЕВАЯ КОЛОНКА (3 cols): ВЫБОР МОДЕЛИ И ДЕРЕВО ПЛАКАТОВ -->
+    <aside class="lg:col-span-3 flex flex-col gap-3">
+      
+      <!-- 1. Выбор модели автомобиля -->
+      <div class="bg-[#111827] border border-[#1F2937] rounded-xl p-3.5 shadow-md">
+        <div class="flex items-center justify-between border-b border-[#1F2937] pb-2 mb-2.5">
+          <span class="text-xs font-bold text-white uppercase tracking-wider flex items-center space-x-1.5">
+            <i class="fa-solid fa-car text-amber-500"></i>
+            <span>1. Автомобиль ВАЗ</span>
+          </span>
+          <span id="carDriveBadge" class="text-[10px] font-mono bg-cyan-950 text-cyan-400 px-2 py-0.5 rounded border border-cyan-800">FWD</span>
+        </div>
+
+        <select id="modelSelect" onchange="onModelSelectChange()" class="w-full bg-[#090D16] border border-[#26354D] rounded-lg px-3 py-2 text-xs text-white font-semibold focus:outline-none focus:border-amber-500 mb-2.5">
+          <!-- Заполняется всеми моделями ВАЗ -->
+        </select>
+
+        <!-- Краткий техпаспорт выбранной модели -->
+        <div class="bg-[#090D16] p-2.5 rounded-lg border border-[#1F2937] text-[11px] space-y-1 font-mono">
+          <div class="flex justify-between">
+            <span class="text-slate-500">Двигатель:</span>
+            <span id="infoEngine" class="text-slate-200 font-semibold truncate max-w-[170px]">1.8 Evo 16V (21179-77)</span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-slate-500">КПП / Трансмиссия:</span>
+            <span id="infoGearbox" class="text-amber-400 truncate max-w-[170px]">Вариатор CVT18 / МКПП</span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-slate-500">Индекс OEM:</span>
+            <span id="infoPrefix" class="text-cyan-400">845003 / 21179</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 2. Дерево групп и плакатов (А, Д, М, К, Б, Е) -->
+      <div class="bg-[#111827] border border-[#1F2937] rounded-xl p-3.5 shadow-md flex-1 flex flex-col">
+        <div class="flex items-center justify-between border-b border-[#1F2937] pb-2 mb-2">
+          <span class="text-xs font-bold text-white uppercase tracking-wider flex items-center space-x-1.5">
+            <i class="fa-solid fa-folder-tree text-amber-500"></i>
+            <span>2. Плакаты узлов (ГОСТ)</span>
+          </span>
+          <span class="text-[10px] text-slate-400 font-mono">18 плакатов</span>
+        </div>
+
+        <!-- Быстрый фильтр разделов дерева: Все / Шасси и ДВС / Кузов / Электрика -->
+        <div class="grid grid-cols-4 gap-1 bg-[#090D16] p-1 rounded-lg border border-[#1F2937] mb-2.5 text-[10px]">
+          <button onclick="setTreeFilter('all')" id="treeTab_all" class="py-1 rounded font-bold bg-amber-500 text-black">Все (18)</button>
+          <button onclick="setTreeFilter('mech')" id="treeTab_mech" class="py-1 rounded font-medium text-slate-400 hover:text-white">Шасси (11)</button>
+          <button onclick="setTreeFilter('body')" id="treeTab_body" class="py-1 rounded font-medium text-slate-400 hover:text-white">Кузов (3)</button>
+          <button onclick="setTreeFilter('elec')" id="treeTab_elec" class="py-1 rounded font-medium text-slate-400 hover:text-white">Электр (4)</button>
+        </div>
+
+        <div id="postersTreeContainer" class="space-y-1.5 overflow-y-auto pr-1 flex-1 max-h-[430px]">
+          <!-- Генерируется динамически -->
+        </div>
+      </div>
+
+    </aside>
+
+    <!-- ЦЕНТРАЛЬНАЯ КОЛОНКА (5 cols): ИНТЕРАКТИВНЫЙ ЧЕРТЁЖ ШАССИ, КУЗОВА, ЭЛЕКТРИКИ ИЛИ УЗЛА -->
+    <section class="lg:col-span-5 bg-[#111827] border border-[#1F2937] rounded-xl shadow-lg flex flex-col overflow-hidden min-h-[540px]">
+      
+      <!-- Панель управления чертежом -->
+      <div class="bg-[#162032] px-3.5 py-2.5 border-b border-[#1F2937] flex flex-wrap items-center justify-between gap-2">
+        <div>
+          <div class="flex items-center space-x-2">
+            <span id="posterIndexBadge" class="text-[11px] font-mono font-bold bg-amber-500 text-black px-1.5 py-0.5 rounded">ПЛАКАТ А400</span>
+            <h2 id="canvasTitle" class="text-xs sm:text-sm font-bold text-white truncate">Топливная система, рампа форсунок и дроссельный узел</h2>
+          </div>
+          <p id="canvasSubtitle" class="text-[11px] text-slate-400 mt-0.5">Модуль электробензонасоса (ЭБН), фильтр, топливная рампа, форсунки, дроссель Е-Газ и ресивер</p>
+        </div>
+
+        <!-- Инструменты масштаба -->
+        <div class="flex items-center space-x-1 text-xs">
+          <button onclick="zoomDrawing(1.2)" class="p-1.5 bg-[#090D16] hover:bg-[#1F2937] text-slate-200 rounded border border-[#26354D]" title="Увеличить чертёж">
+            <i class="fa-solid fa-magnifying-glass-plus"></i>
+          </button>
+          <button onclick="zoomDrawing(0.8)" class="p-1.5 bg-[#090D16] hover:bg-[#1F2937] text-slate-200 rounded border border-[#26354D]" title="Уменьшить чертёж">
+            <i class="fa-solid fa-magnifying-glass-minus"></i>
+          </button>
+          <button onclick="resetDrawingZoom()" class="px-2 py-1 bg-[#090D16] hover:bg-[#1F2937] text-slate-200 rounded border border-[#26354D] font-mono text-[11px]">
+            100%
+          </button>
+        </div>
+      </div>
+
+      <!-- Полотно чертежа -->
+      <div id="blueprintViewport" class="flex-1 blueprint-dark relative overflow-hidden flex items-center justify-center p-2 select-none">
+        
+        <div id="drawingTransformBox" class="relative w-full h-full flex items-center justify-center transition-transform duration-150 origin-center">
+          
+          <!-- ГЛАВНЫЙ SVG ХОЛСТ -->
+          <svg id="mainTechnicalSvg" class="w-full h-full max-h-[500px]" viewBox="0 0 700 460" role="img" aria-label="Интерактивная техническая схема узла автомобиля" preserveAspectRatio="xMidYMid meet" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <!-- Динамическая отрисовка -->
+          </svg>
+
+        </div>
+
+      </div>
+
+      <!-- Нижняя легенда чертежа -->
+      <div class="bg-[#0D1320] px-3.5 py-2 border-t border-[#1F2937] flex flex-wrap items-center justify-between text-[11px] text-slate-400 gap-2">
+        <div class="flex items-center space-x-3">
+          <span class="flex items-center space-x-1">
+            <span class="w-2.5 h-2.5 rounded-full bg-amber-500 inline-block"></span>
+            <span>Выноска ГОСТ</span>
+          </span>
+          <span class="flex items-center space-x-1">
+            <span class="w-2.5 h-2.5 rounded-full bg-cyan-400 inline-block"></span>
+            <span>Выбранная деталь</span>
+          </span>
+        </div>
+        <span class="font-mono text-[10px] text-slate-500">СХЕМЫ SVG • СПРАВОЧНЫЙ МАКЕТ — СВЕРЯЙТЕ OEM С VIN И КАТАЛОГОМ</span>
+      </div>
+
+    </section>
+
+    <!-- ПРАВАЯ КОЛОНКА (4 cols): СПЕЦИФИКАЦИЯ ЗАПЧАСТЕЙ AVTOALL -->
+    <section class="lg:col-span-4 bg-[#111827] border border-[#1F2937] rounded-xl shadow-lg flex flex-col overflow-hidden">
+      
+      <div class="bg-[#162032] px-3.5 py-2.5 border-b border-[#1F2937] flex items-center justify-between">
+        <div>
+          <h3 class="text-xs font-bold text-white uppercase tracking-wider flex items-center space-x-1.5">
+            <i class="fa-solid fa-table-list text-cyan-400"></i>
+            <span>Спецификация узла (AvtoAll)</span>
+          </h3>
+          <p class="text-[11px] text-slate-400">Оригинальные номера АвтоВАЗ и комплектность</p>
+        </div>
+        <span id="specCounterBadge" class="text-xs font-mono bg-[#090D16] text-amber-400 px-2 py-0.5 rounded border border-[#26354D]">
+          0 поз.
+        </span>
+      </div>
+
+      <!-- Быстрый фильтр внутри спецификации -->
+      <div class="p-2.5 bg-[#0D1320] border-b border-[#1F2937]">
+        <input 
+          type="text" 
+          id="localSpecFilter"
+          oninput="filterSpecTable(this.value)"
+          placeholder="Фильтр в текущем узле по номеру или названию..."
+          class="w-full bg-[#090D16] border border-[#26354D] rounded-lg px-3 py-1.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-cyan-400"
+        >
+      </div>
+
+      <!-- Список/таблица запчастей -->
+      <div id="specListContainer" class="flex-1 overflow-y-auto p-2.5 space-y-2 max-h-[480px]">
+        <!-- Карточки позиций спецификации -->
+      </div>
+
+      <!-- Подвал спецификации -->
+      <div class="bg-[#0D1320] px-3.5 py-2 border-t border-[#1F2937] flex items-center justify-between text-[11px] text-slate-400">
+        <span>Клик по артикулу копирует OEM</span>
+        <button onclick="addAllNodePartsToOrder()" class="text-cyan-400 hover:underline font-medium">
+          + Все детали узла в наряд
+        </button>
+      </div>
+
+    </section>
+
+  </main>
+
+  <!-- МОДАЛЬНОЕ ОКНО: ЗАКАЗ-НАРЯД / СПЕЦИФИКАЦИЯ НА ПЕЧАТЬ -->
+  <div id="orderModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div id="printModalContent" class="bg-[#111827] border border-[#26354D] rounded-2xl max-w-2xl w-full p-5 shadow-2xl space-y-4">
+      <div class="flex items-center justify-between border-b border-[#1F2937] pb-3">
+        <div>
+          <h3 class="text-base font-bold text-white uppercase">Дефектовочная ведомость / Заказ запчастей</h3>
+          <p id="orderCarSubtitle" class="text-xs text-slate-400 font-mono">Автомобиль: LADA Vesta NG</p>
+        </div>
+        <button onclick="closeOrderModal()" class="text-slate-400 hover:text-white text-lg px-2">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <div class="max-h-[360px] overflow-y-auto">
+        <table class="w-full text-left text-xs border-collapse">
+          <thead class="bg-[#162032] text-slate-300 border-b border-[#26354D]">
+            <tr>
+              <th class="py-2 px-3">OEM Артикул</th>
+              <th class="py-2 px-3">Наименование детали</th>
+              <th class="py-2 px-2 text-center">Кол-во</th>
+              <th class="py-2 px-3 text-right">Сумма</th>
+              <th class="py-2 px-2"></th>
+            </tr>
+          </thead>
+          <tbody id="orderModalTbody" class="divide-y divide-[#1F2937]">
+            <!-- Позиции заказа -->
+          </tbody>
+        </table>
+      </div>
+
+      <div class="flex items-center justify-between pt-3 border-t border-[#1F2937]">
+        <div class="text-xs">
+          <span class="text-slate-400">Итоговая стоимость запчастей:</span>
+          <span id="orderTotalPrice" class="text-base font-bold text-amber-400 font-mono ml-2">0 ₽</span>
+        </div>
+        <div class="flex items-center space-x-2">
+          <button onclick="clearOrderCart()" class="px-3 py-1.5 bg-red-950/70 hover:bg-red-900 text-red-300 rounded-lg text-xs">
+            Очистить
+          </button>
+          <button onclick="window.print()" class="px-4 py-1.5 bg-amber-500 hover:bg-amber-400 text-black font-bold rounded-lg text-xs flex items-center space-x-1.5">
+            <i class="fa-solid fa-print"></i>
+            <span>Печать ведомости</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Всплывающее уведомление -->
+  <div id="toastAlert" class="fixed bottom-4 right-4 bg-amber-500 text-black font-bold text-xs px-4 py-2.5 rounded-xl shadow-2xl hidden z-50">
+    Скопировано!
+  </div>
+
+  <!-- ЯДРО КАТАЛОГА И ГЕНЕРАТОР ЧЕРТЕЖЕЙ АВТОВАЗ -->
+  <script>
+    /* =========================================================================
+       1. БАЗА ВСЕХ МОДЕЛЕЙ ВАЗ (ПО СЕМЕЙСТВАМ AVTOALL)
+       ========================================================================= */
+    const VAZ_MODELS = [
+      // Семейство Vesta / XRAY / Largus
+      { id: "vesta-ng", family: "vesta", body: "sedan", name: "Lada Vesta NG (2022–2026)", engine: "1.8 Evo 16V (21179-77)", gearbox: "5-МКПП 21807 / Вариатор CVT18", ecu: "ИТЭЛМА М74.9 / М86", drive: "FWD", prefix: "845003", engPrefix: "21179", gboxPrefix: "21810" },
+      { id: "vesta-sw", family: "vesta", body: "sedan", name: "Lada Vesta / SW Cross (2015–2022)", engine: "1.6 16V (21129 106 л.с.)", gearbox: "5-МКПП 21807 (Тросовая)", ecu: "ИТЭЛМА М86", drive: "FWD", prefix: "845000", engPrefix: "21129", gboxPrefix: "21810" },
+      { id: "xray-cross", family: "vesta", body: "hatch", name: "Lada XRAY / XRAY Cross", engine: "1.6 (21129) / 1.8 (21179)", gearbox: "5-МКПП JR5 / 21807", ecu: "ИТЭЛМА М86 / EMS3125", drive: "FWD", prefix: "845002", engPrefix: "21129", gboxPrefix: "21810" },
+      { id: "largus-fl", family: "vesta", body: "sedan", name: "Lada Largus FL (Универсал / Фургон)", engine: "1.6 8V (11182) / 16V (21129)", gearbox: "5-МКПП JR5 / 21807", ecu: "ИТЭЛМА М74.8 / М86", drive: "FWD", prefix: "845009", engPrefix: "11182", gboxPrefix: "21810" },
+
+      // Семейство Granta / Kalina
+      { id: "granta-fl", family: "granta", body: "sedan", name: "Lada Granta FL (2190 / 2191)", engine: "1.6 8V ВАЗ-11182 (90 л.с.)", gearbox: "5-МКПП 2181 (Тросовая)", ecu: "ИТЭЛМА М74.8 / М74М", drive: "FWD", prefix: "845010", engPrefix: "11182", gboxPrefix: "21810" },
+      { id: "granta-sport", family: "granta", body: "sedan", name: "Lada Granta Cross / Sport", engine: "1.6 16V (21127 106–118 л.с.)", gearbox: "5-МКПП 2181", ecu: "ИТЭЛМА М74", drive: "FWD", prefix: "21900", engPrefix: "21127", gboxPrefix: "21810" },
+      { id: "kalina-2", family: "granta", body: "hatch", name: "Lada Kalina 2 (2192 / 2194)", engine: "1.6 8V (11186) / 16V (21127)", gearbox: "5-МКПП 2181 / АКПП Jatco", ecu: "ИТЭЛМА М74 CAN", drive: "FWD", prefix: "21920", engPrefix: "11186", gboxPrefix: "21810" },
+      { id: "kalina-1", family: "granta", body: "hatch", name: "ВАЗ-1117 / 1118 / 1119 Калина", engine: "1.6 8V (11183) / 1.4 16V (11194)", gearbox: "5-МКПП 1118 (Кулиса)", ecu: "Bosch M7.9.7+ / Январь 7.2", drive: "FWD", prefix: "11180", engPrefix: "11183", gboxPrefix: "21100" },
+
+      // Семейство Niva 4x4
+      { id: "niva-legend", family: "niva", body: "suv", name: "Lada Niva Legend 4x4 (ВАЗ-21214)", engine: "1.7 8V (21214, цепь, гидрики)", gearbox: "5-МКПП 21074 + 2-ст. РК 21214", ecu: "Bosch ME17.9.71 / ИТЭЛМА", drive: "4WD", prefix: "21214", engPrefix: "21214", gboxPrefix: "21074" },
+      { id: "niva-travel", family: "niva", body: "suv", name: "Lada Niva Travel / ВАЗ-2123", engine: "1.7 8V (2123, 80 л.с.)", gearbox: "5-МКПП + РК 2123 с блокировкой", ecu: "Bosch ME17.9.7 / М74.9", drive: "4WD", prefix: "21230", engPrefix: "21230", gboxPrefix: "21230" },
+      { id: "vaz-21213", family: "niva", body: "suv", name: "ВАЗ-21213 / 2131 «Тайга»", engine: "1.7 8V Карбюратор Солекс", gearbox: "5-МКПП 21074 + РК 21213", ecu: "БСЗ (Коммутатор 3620.3734)", drive: "4WD", prefix: "21213", engPrefix: "21213", gboxPrefix: "21074" },
+      { id: "vaz-2121", family: "niva", body: "suv", name: "ВАЗ-2121 «Нива» Классическая", engine: "1.6 8V (ВАЗ-2121)", gearbox: "4-МКПП 2101 + РК 2121", ecu: "Контактное / БСЗ", drive: "4WD", prefix: "21210", engPrefix: "21210", gboxPrefix: "21010" },
+
+      // Семейство Самара 2108–2115
+      { id: "vaz-2114", family: "samara", body: "hatch", name: "ВАЗ-2113 / 2114 Самара-2 (Хэтчбек)", engine: "1.6 8V (11183, 81 л.с.)", gearbox: "5-МКПП 2109 / 2110", ecu: "Январь 7.2 / ИТЭЛМА М73", drive: "FWD", prefix: "21140", engPrefix: "11183", gboxPrefix: "21080" },
+      { id: "vaz-2115", family: "samara", body: "sedan", name: "ВАЗ-2115 Самара-2 (Седан)", engine: "1.5 / 1.6 8V Инжектор", gearbox: "5-МКПП 2109", ecu: "Январь 5.1 / 7.2", drive: "FWD", prefix: "21150", engPrefix: "21110", gboxPrefix: "21080" },
+      { id: "vaz-2109", family: "samara", body: "hatch", name: "ВАЗ-2108 / 2109 «Спутник / Девятка»", engine: "1.3 (2108) / 1.5 (21083)", gearbox: "5-МКПП 21080", ecu: "Коммутатор БСЗ / GM ISFI-2S", drive: "FWD", prefix: "21080", engPrefix: "21083", gboxPrefix: "21080" },
+      { id: "vaz-21099", family: "samara", body: "sedan", name: "ВАЗ-21099 Седан", engine: "1.5 8V Карбюратор / Инжектор", gearbox: "5-МКПП 2109", ecu: "Январь 5.1 / Bosch M1.5.4", drive: "FWD", prefix: "21099", engPrefix: "21083", gboxPrefix: "21080" },
+
+      // Семейство 2110 и Priora
+      { id: "vaz-2170", family: "vaz10", body: "sedan", name: "Lada Priora (2170 / 2171 / 2172)", engine: "1.6 16V (21126, 98 л.с.)", gearbox: "5-МКПП 2170 / 2181", ecu: "Bosch ME17.9.7 / ИТЭЛМА М73", drive: "FWD", prefix: "21700", engPrefix: "21126", gboxPrefix: "21700" },
+      { id: "vaz-2110", family: "vaz10", body: "sedan", name: "ВАЗ-2110 «Десятка» Седан", engine: "1.5 8V (2111) / 16V (2112)", gearbox: "5-МКПП 21100 (Полая ось)", ecu: "Январь 5.1 / Bosch M1.5.4", drive: "FWD", prefix: "21100", engPrefix: "21120", gboxPrefix: "21100" },
+      { id: "vaz-2112", family: "vaz10", body: "hatch", name: "ВАЗ-2111 Универсал / 2112 Хэтчбек", engine: "1.6 16V (21124, клапана не гнет)", gearbox: "5-МКПП 21100", ecu: "Январь 7.2 / Bosch M7.9.7", drive: "FWD", prefix: "21120", engPrefix: "21124", gboxPrefix: "21100" },
+
+      // Классика 2101–2107
+      { id: "vaz-2107", family: "classic", body: "classic", name: "ВАЗ-2107 «Семёрка»", engine: "1.5 Карб / 1.6 Инжектор (21067)", gearbox: "5-МКПП 21074 (Задний привод)", ecu: "Январь 7.2 / ИТЭЛМА М73", drive: "RWD", prefix: "21070", engPrefix: "21067", gboxPrefix: "21074" },
+      { id: "vaz-2106", family: "classic", body: "classic", name: "ВАЗ-2106 «Шестёрка»", engine: "1.6 8V (ВАЗ-2106, цепь)", gearbox: "4/5-МКПП 2106 / 21074", ecu: "Контактное / БСЗ", drive: "RWD", prefix: "21060", engPrefix: "21060", gboxPrefix: "21074" },
+      { id: "vaz-2105", family: "classic", body: "classic", name: "ВАЗ-2104 / 2105 «Пятёрка»", engine: "1.3 ременной (2105) / 1.5 цепь", gearbox: "4/5-МКПП Классика", ecu: "Контактное / Инжектор", drive: "RWD", prefix: "21050", engPrefix: "21050", gboxPrefix: "21050" },
+      { id: "vaz-2101", family: "classic", body: "classic", name: "ВАЗ-2101 / 2102 / 2103 «Жигули»", engine: "1.2 8V (ВАЗ-2101, 64 л.с.)", gearbox: "4-МКПП 21010", ecu: "Распределитель Р-125", drive: "RWD", prefix: "21010", engPrefix: "21010", gboxPrefix: "21010" }
+    ];
+
+    /* =========================================================================
+       2. ДЕРЕВО СБОРОЧНЫХ ПЛАКАТОВ AVTOALL (18 ПЛАКАТОВ: ВКЛЮЧАЯ А400 ТОПЛИВНАЯ СИСТЕМА И ВПУСК)
+       ========================================================================= */
+    const AVTOALL_POSTERS = [
+      // --- НОВЫЙ ПЛАКАТ А400: ТОПЛИВНАЯ СИСТЕМА, ЭЛЕКТРОБЕНЗОНАСОС, РАМПА, ФОРСУНКИ И ДРОССЕЛЬ ---
+      {
+        code: "А400",
+        category: "mech",
+        group: "Группа 11 — Система питания и впуск",
+        title: "Топливная система, рампа форсунок и дроссельный узел",
+        subtitle: "Модуль электробензонасоса (ЭБН), фильтр, топливная рампа, форсунки, дроссель Е-Газ и ресивер",
+        carCoords: { x: 465, y: 275, label: "А400 Топливо" },
+        getParts: (m) => {
+          const isVesta = m.family === "vesta";
+          const isCarb = m.id === "vaz-2101" || m.id === "vaz-2106" || m.id === "vaz-2121" || m.id === "vaz-21213";
+          return [
+            { pos: 1, oem: isVesta ? "8450008090" : (isCarb ? "21010-1106010-00" : `${m.prefix}-1139009-00`), name: isCarb ? "Бензонасос диафрагменный механический (Пекар / ДААЗ) + погружной датчик уровня топлива (ДУТ)" : "Модуль погружного электробензонасоса (ЭБН 3.8–4.0 бар) в сборе со стаканом, регулятором давления и ДУТ (УТЁС / СОАТЭ)", qty: 1, price: isVesta ? 6800 : (isCarb ? 1450 : 4500), x: 130, y: 310, lx: 85, ly: 175 },
+            { pos: 2, oem: isVesta ? "21179-1144010-00" : (isCarb ? "21083-1107010-00" : `${m.engPrefix}-1144010-00`), name: isCarb ? "Карбюратор двухкамерный эмульсионный ДААЗ («Солекс» / «Озон») в сборе с экономайзером" : "Рампа топливная (коллектор распределения топлива без обратки) со штуцером-золотником замера давления", qty: 1, price: isVesta ? 3200 : (isCarb ? 7900 : 2100), x: 375, y: 310, lx: 295, ly: 405 },
+            { pos: 3, oem: isVesta ? "21179-1132010-00" : "21120-1132010-02", name: "Форсунка топливная электромагнитная тонкого распыла с комплектом верхних и нижних витоновых колец ФКМ (Bosch / Сименс)", qty: 4, price: isVesta ? 2450 : 1650, x: 425, y: 235, lx: 455, ly: 405 },
+            { pos: 4, oem: isVesta ? "8450030690" : "21126-1148010-00", name: "Патрубок дроссельный с электроприводом заслонки (Е-Газ ИТЭЛМА / Bosch) и уплотнительным силиконовым кольцом", qty: 1, price: isVesta ? 8400 : 5600, x: 495, y: 125, lx: 520, ly: 38 },
+            { pos: 5, oem: isVesta ? "21179-1008600-00" : `${m.engPrefix}-1008600-00`, name: "Ресивер (коллектор впускной полиамидный / алюминиевый) в сборе с прокладками впускных каналов", qty: 1, price: isVesta ? 7400 : 4200, x: 365, y: 120, lx: 345, ly: 38 },
+            { pos: 6, oem: "21230-1117010-00", name: "Фильтр тонкой очистки топлива магистральный металлический (под быстросъёмные защелки) + сетка-фильтр ЭБН", qty: 1, price: 650, x: 235, y: 365, lx: 145, ly: 405 },
+            { pos: 7, oem: isVesta ? "8450033130" : "21120-1109080-00", name: "Корпус воздушного фильтра со сменным фильтрующим элементом, гофрой впуска и электромагнитным клапаном продувки адсорбера", qty: 1, price: isVesta ? 3900 : 2300, x: 590, y: 215, lx: 605, ly: 405 }
+          ];
+        }
+      },
+
+      // --- ПЛАКАТ А300: СИСТЕМА ОХЛАЖДЕНИЯ ДВИГАТЕЛЯ И ОТОПИТЕЛЬ САЛОНА (ПЕЧКА) ---
+      {
+        code: "А300",
+        category: "mech",
+        group: "Группа 13 / 81 — Охлаждение и Отопитель",
+        title: "Система охлаждения двигателя и радиатор печки",
+        subtitle: "Водяной насос (помпа), термостат, радиатор охлаждения, электровентилятор, бачок, печка и патрубки",
+        carCoords: { x: 105, y: 225, label: "А300 Охлаждение" },
+        getParts: (m) => {
+          const isVesta = m.family === "vesta";
+          const isClassicOrNiva = m.family === "classic" || m.family === "niva";
+          return [
+            { pos: 1, oem: isVesta ? "8450007920" : `${m.prefix}-1301012-00`, name: "Радиатор водяного охлаждения двигателя алюминиевый трубчато-ленточный в сборе (LUZAR / ДААЗ)", qty: 1, price: isVesta ? 6900 : 4400, x: 145, y: 245, lx: 85, ly: 85 },
+            { pos: 2, oem: `${m.engPrefix}-1307010-00`, name: isClassicOrNiva ? "Насос водяной (помпа) в сборе с корпусом, крыльчаткой и паронитовой прокладкой (ТЗА)" : "Насос водяной (помпа) привода от ремня ГРМ с чугунной/пластиковой крыльчаткой и прокладкой (ТЗА / GMB)", qty: 1, price: isVesta ? 3100 : 1950, x: 355, y: 245, lx: 355, ly: 398 },
+            { pos: 3, oem: isVesta ? "21902-1306010-00" : `${m.prefix}-1306010-00`, name: "Термостат в сборе с корпусом и термосиловым элементом (температура начала открытия 85°C / 87°C)", qty: 1, price: 1850, x: 345, y: 120, lx: 345, ly: 38 },
+            { pos: 4, oem: isVesta ? "8450007932" : `${m.prefix}-1311014-00`, name: "Бачок расширительный полипропиленовый в сборе с крышкой-клапаном сброса давления (1.2–1.4 бар)", qty: 1, price: 1150, x: 545, y: 115, lx: 585, ly: 42 },
+            { pos: 5, oem: isVesta ? "8450007358" : `${m.prefix}-8101060-00`, name: isClassicOrNiva ? "Радиатор отопителя салона (печка) в сборе с керамическим краном отопителя и уплотнителями" : "Радиатор отопителя салона (печка) двухрядный алюминиевый с завихрителями (ДААЗ / LUZAR)", qty: 1, price: isVesta ? 3400 : 2100, x: 545, y: 315, lx: 585, ly: 398 },
+            { pos: 6, oem: isVesta ? "8450007925" : `${m.prefix}-1303010-00`, name: "Комплект патрубков радиатора (верхний, нижний, пароотводящие шланги БРТ) и подводящая труба («саксофон»)", qty: 1, price: 2250, x: 430, y: 285, lx: 475, ly: 398 },
+            { pos: 7, oem: isVesta ? "8450030815" : `${m.prefix}-1300024-00`, name: "Электровентилятор охлаждения радиатора в сборе с кожухом (диффузором) и гасящим резистором", qty: 1, price: isVesta ? 7800 : 4600, x: 220, y: 245, lx: 115, ly: 398 }
+          ];
+        }
+      },
+
+      // --- ПЛАКАТЫ ТРАНСМИССИИ: КПП (Д200) И РАЗДАТОЧНАЯ КОРОБКА / ПРИВОДЫ (Д250) ---
+      {
+        code: "Д200",
+        category: "mech",
+        group: "Группа 17 — Коробка передач",
+        title: "Коробка передач в разборе: валы, шестерни и синхронизаторы",
+        subtitle: "Первичный и вторичный валы, шестерни 1–5 передач, муфты синхронизаторов, кольца, вилки и дифференциал",
+        carCoords: { x: 285, y: 245, label: "Д200 КПП" },
+        getParts: (m) => {
+          const gp = m.gboxPrefix || "21810";
+          const isFwd = m.drive === "FWD";
+          return [
+            { pos: 1, oem: `${gp}-1701030-00`, name: "Вал первичный (ведущий) коробки передач в сборе с блоком косозубых шестерен и подшипником", qty: 1, price: 5800, x: 260, y: 145, lx: 110, ly: 65 },
+            { pos: 2, oem: `${gp}-1701105-00`, name: isFwd ? "Вал вторичный (ведомый) полый с ведущей шестерней главной пары" : "Вал вторичный (ведомый) с фланцем эластичной муфты кардана и промежуточный вал", qty: 1, price: 6400, x: 225, y: 255, lx: 95, ly: 255 },
+            { pos: 3, oem: `${gp}-1701112-00`, name: "Муфта синхронизатора 1–2 и 3–4 передач скользящая со ступицей, сухарями и пружинами в сборе", qty: 2, price: 2450, x: 345, y: 255, lx: 345, ly: 395 },
+            { pos: 4, oem: `${gp}-1701164-00`, name: "Кольцо блокирующее синхронизатора конусное (латунное / с молибденовым покрытием, к-т 5 шт)", qty: 5, price: 680, x: 395, y: 255, lx: 485, ly: 395 },
+            { pos: 5, oem: `${gp}-1701120-00`, name: "Шестерни ведомые 1-й, 2-й, 3-й, 4-й и 5-й передач вторичного вала с игольчатыми подшипниками", qty: 5, price: 2150, x: 470, y: 255, lx: 600, ly: 255 },
+            { pos: 6, oem: `${gp}-1702010-00`, name: "Механизм переключения передач: штоки и вилки включения 1–2, 3–4, 5-й передач и заднего хода", qty: 1, price: 3200, x: 420, y: 90, lx: 560, ly: 55 },
+            { pos: 7, oem: isFwd ? `${gp}-2303012-00` : `${gp}-1701015-00`, name: isFwd ? "Дифференциал коробки передач в сборе с сателлитами и ведомой шестерней главной пары (3.7 / 3.9)" : "Картер коробки передач литой алюминиевый с задней крышкой, подшипниками и сальниками БРТ", qty: 1, price: isFwd ? 7900 : 8500, x: 165, y: 365, lx: 155, ly: 410 }
+          ];
+        }
+      },
+      {
+        code: "Д250",
+        category: "mech",
+        group: "Группа 18 / 22 — Раздатка 4x4 и Приводы",
+        title: "Раздаточная коробка Нивы 4x4, карданы и приводы ШРУС",
+        subtitle: "Межосевой дифференциал с принудительной блокировкой, валы РК, понижающий ряд, карданы и ШРУСы",
+        carCoords: { x: 375, y: 280, label: "Д250 РК / Привод" },
+        getParts: (m) => {
+          if (m.drive === "4WD") {
+            return [
+              { pos: 1, oem: `${m.prefix}-1800020-00`, name: "Коробка раздаточная двухступенчатая в сборе с межосевым дифференциалом и рычагами управления", qty: 1, price: 34500, x: 345, y: 115, lx: 345, ly: 42 },
+              { pos: 2, oem: "21213-1802150-00", name: "Дифференциал межосевой раздаточной коробки в сборе с чашками, крестовиной и 4 сателлитами", qty: 1, price: 8900, x: 345, y: 230, lx: 560, ly: 135 },
+              { pos: 3, oem: "21210-1802118-00", name: "Муфта принудительной блокировки межосевого дифференциала и муфта переключения В/Н диапазона", qty: 2, price: 1950, x: 245, y: 230, lx: 105, ly: 125 },
+              { pos: 4, oem: "21213-1802084-00", name: "Вал промежуточный с косозубыми шестернями высшей/низшей ступеней и валы привода мостов", qty: 1, price: 4800, x: 445, y: 230, lx: 585, ly: 245 },
+              { pos: 5, oem: "21214-2201012-10", name: "Вал карданный переднего и заднего мостов усиленный на ШРУСах (нового образца СиМ / АвтоВАЗ)", qty: 2, price: 7600, x: 165, y: 345, lx: 110, ly: 395 },
+              { pos: 6, oem: "21213-1802208-00", name: "Комплект двухрядных подшипников фланцев РК, армированных сальников БРТ и прокладок картера", qty: 1, price: 2400, x: 515, y: 345, lx: 565, ly: 395 }
+            ];
+          } else if (m.drive === "RWD") {
+            return [
+              { pos: 1, oem: `${m.prefix}-2200012-00`, name: "Передача карданная двухвальная в сборе с промежуточной опорой и эластичной муфтой", qty: 1, price: 6800, x: 345, y: 115, lx: 345, ly: 42 },
+              { pos: 2, oem: "21060-2402010-00", name: "Редуктор заднего ведущего моста в сборе с главной парой (3.9 / 4.1) и дифференциалом", qty: 1, price: 14500, x: 345, y: 230, lx: 560, ly: 135 },
+              { pos: 3, oem: "21010-2202120-00", name: "Муфта эластичная резинометаллическая карданного вала со стяжным хомутом БРТ", qty: 1, price: 1250, x: 245, y: 230, lx: 105, ly: 125 },
+              { pos: 4, oem: "21010-2202080-00", name: "Опора промежуточная карданного вала в сборе с подвесным подшипником", qty: 1, price: 1150, x: 445, y: 230, lx: 585, ly: 245 },
+              { pos: 5, oem: "21010-2202025-00", name: "Крестовина карданного вала на игольчатых подшипниках со стопорными кольцами", qty: 2, price: 690, x: 165, y: 345, lx: 110, ly: 395 },
+              { pos: 6, oem: "21010-2403069-00", name: "Полуось заднего моста правая / левая в сборе с подшипником, запорной втулкой и сальником", qty: 2, price: 3200, x: 515, y: 345, lx: 565, ly: 395 }
+            ];
+          } else {
+            return [
+              { pos: 1, oem: `${m.prefix}-2215010-00`, name: "Привод переднего колеса правый (длинный) и левый (короткий) в сборе с двумя ШРУСами", qty: 2, price: 6900, x: 345, y: 115, lx: 345, ly: 42 },
+              { pos: 2, oem: `${m.prefix}-2215056-00`, name: "Шарнир равных угловых скоростей внутренний трехшиповик (трипоид) со стопорным кольцом", qty: 2, price: 2650, x: 345, y: 230, lx: 560, ly: 135 },
+              { pos: 3, oem: `${m.prefix}-2215012-00`, name: "Шарнир равных угловых скоростей наружный (колесный ШРУС со ступичной гайкой М20/М24)", qty: 2, price: 2450, x: 245, y: 230, lx: 105, ly: 125 },
+              { pos: 4, oem: "8450030518", name: "Вал промежуточный правого привода с подвесным кронштейном и опорным подшипником", qty: 1, price: 4200, x: 445, y: 230, lx: 585, ly: 245 },
+              { pos: 5, oem: "21080-2215030-00", name: "Комплект защитных гофрированных чехлов (пыльников) ШРУС БРТ с хомутами и смазкой ШРУС-4", qty: 4, price: 580, x: 165, y: 345, lx: 110, ly: 395 },
+              { pos: 6, oem: "21080-2301034-00", name: "Сальник привода правый и левый коробки передач армированный (фторкаучук БРТ)", qty: 2, price: 320, x: 515, y: 345, lx: 565, ly: 395 }
+            ];
+          }
+        }
+      },
+
+      // --- ОСТАЛЬНЫЕ ПЛАКАТЫ МЕХАНИКИ И ШАССИ (category: 'mech') ---
+      {
+        code: "Д100",
+        category: "mech",
+        group: "Группа 16 — Трансмиссия",
+        title: "Сцепление, маховик и выжимной привод",
+        subtitle: "Маховик со зубчатым венцом, ведомый диск с демпфером, нажимная корзина и муфта",
+        carCoords: { x: 245, y: 235, label: "Д100 Сцепление" },
+        getParts: (m) => [
+          { pos: 1, oem: `${m.engPrefix}-1005115`, name: "Маховик чугунный с напрессованным зубчатым ободом стартера", qty: 1, price: 4200, x: 145, y: 230, lx: 90, ly: 90 },
+          { pos: 2, oem: `${m.prefix}-1601130`, name: "Диск сцепления ведомый с фрикционными накладками и демпфером", qty: 1, price: 2450, x: 270, y: 230, lx: 240, ly: 75 },
+          { pos: 3, oem: `${m.prefix}-1601085`, name: "Кожух сцепления с нажимным диском и диафрагменной пружиной (Корзина)", qty: 1, price: 3650, x: 395, y: 230, lx: 410, ly: 75 },
+          { pos: 4, oem: `${m.prefix}-1601180`, name: "Муфта выключения сцепления с упорным подшипником в сборе", qty: 1, price: 1150, x: 510, y: 230, lx: 575, ly: 120 },
+          { pos: 5, oem: `${m.prefix}-1601200`, name: "Вилка выключения сцепления со сферической опорой", qty: 1, price: 780, x: 555, y: 285, lx: 580, ly: 365 },
+          { pos: 6, oem: "21080-1601207-00", name: "Болт центрирующий крепления корзины сцепления М8х1.25 (БелЗАН)", qty: 6, price: 45, x: 400, y: 120, lx: 270, ly: 390 }
+        ]
+      },
+      {
+        code: "А140",
+        category: "mech",
+        group: "Группа 10 — Двигатель",
+        title: "Привод ГРМ, распредвалы и ролики",
+        subtitle: "Зубчатый ремень / цепь ГРМ, шестерни распредвалов, фазорегулятор и натяжитель",
+        carCoords: { x: 165, y: 195, label: "А140 ГРМ" },
+        getParts: (m) => {
+          const isChain = m.family === "classic" || m.family === "niva";
+          const isVesta = m.family === "vesta";
+          return [
+            { pos: 1, oem: isChain ? `${m.engPrefix}-1006040-00` : `${m.engPrefix}-1006040`, name: isChain ? "Цепь привода распредвала втулочно-роликовая (114/116 зв.)" : "Ремень привода ГРМ зубчатый усиленный Gates / БРТ", qty: 1, price: isVesta ? 2650 : 1250, x: 350, y: 215, lx: 490, ly: 180 },
+            { pos: 2, oem: isVesta ? "21179-1006020" : `${m.engPrefix}-1006020`, name: isVesta ? "Механизм изменения фаз газораспределения (Фазовращатель INA)" : "Шкив (звездочка) распределительного вала впускного", qty: 1, price: isVesta ? 14200 : 1150, x: 250, y: 120, lx: 110, ly: 85 },
+            { pos: 3, oem: `${m.engPrefix}-1006019`, name: "Шкив распределительного вала выпускного со шпонкой", qty: 1, price: 1450, x: 430, y: 120, lx: 560, ly: 85 },
+            { pos: 4, oem: isChain ? `${m.engPrefix}-1006060` : `${m.engPrefix}-1006120`, name: isChain ? "Натяжитель цепи ГРМ автоматический (плунжерный / гидравлический)" : "Ролик натяжной ремня ГРМ автоматический с эксцентриком INA", qty: 1, price: 2450, x: 210, y: 245, lx: 95, ly: 250 },
+            { pos: 5, oem: isChain ? `${m.engPrefix}-1006090` : `${m.engPrefix}-1006135`, name: isChain ? "Башмак натяжителя и успокоитель цепи ГРМ" : "Ролик опорный (обводной) ремня ГРМ двухрядный", qty: 1, price: 1650, x: 465, y: 245, lx: 585, ly: 260 },
+            { pos: 6, oem: `${m.engPrefix}-1005030`, name: "Зубчатый шкив (шестерня) носка коленчатого вала", qty: 1, price: 980, x: 340, y: 360, lx: 160, ly: 390 },
+            { pos: 7, oem: `${m.engPrefix}-1006015`, name: "Сальник распределительного вала армированный фторкаучук", qty: 2, price: 320, x: 340, y: 120, lx: 340, ly: 45 }
+          ];
+        }
+      },
+      {
+        code: "А100",
+        category: "mech",
+        group: "Группа 10 — Двигатель",
+        title: "Блок цилиндров, поршневая группа и КШМ",
+        subtitle: "Гильзы блока, поршни с кольцами, палец, шатун в сборе, коленвал и вкладыши",
+        carCoords: { x: 205, y: 215, label: "А100 ДВС" },
+        getParts: (m) => [
+          { pos: 1, oem: `${m.engPrefix}-1004015`, name: "Поршень с проточками (безвтыковый) с антифрикционным покрытием", qty: 4, price: 2150, x: 340, y: 105, lx: 510, ly: 80 },
+          { pos: 2, oem: `${m.engPrefix}-1004025`, name: "Комплект поршневых колец (компрессионные + маслосъемные)", qty: 1, price: 1850, x: 340, y: 55, lx: 150, ly: 55 },
+          { pos: 3, oem: `${m.engPrefix}-1004020`, name: "Палец поршневой плавающего типа со стопорными кольцами", qty: 4, price: 420, x: 260, y: 145, lx: 110, ly: 145 },
+          { pos: 4, oem: `${m.engPrefix}-1004045`, name: "Шатун кованый стальной в сборе с крышкой и бронзовой втулкой", qty: 4, price: 2600, x: 340, y: 225, lx: 520, ly: 210 },
+          { pos: 5, oem: `${m.engPrefix}-1005015`, name: "Вал коленчатый полнопротивовесный пятиопорный", qty: 1, price: 16800, x: 340, y: 360, lx: 530, ly: 360 },
+          { pos: 6, oem: `${m.engPrefix}-1000102`, name: "Комплект шатунных и коренных вкладышей (стандарт ЗМЗ/Дайдо)", qty: 1, price: 1450, x: 245, y: 310, lx: 110, ly: 315 }
+        ]
+      },
+      {
+        code: "М100",
+        category: "mech",
+        group: "Группа 29 — Ходовая часть",
+        title: "Передняя подвеска, стойка и рычаги",
+        subtitle: "Телескопическая стойка СААЗ, витая пружина, верхняя опора, рычаг, шаровая и стабилизатор",
+        carCoords: { x: 155, y: 280, label: "М100 Подвеска" },
+        getParts: (m) => [
+          { pos: 1, oem: `${m.prefix}-2905002`, name: "Стойка телескопическая передней подвески газонаполненная СААЗ", qty: 2, price: 4600, x: 350, y: 215, lx: 530, ly: 170 },
+          { pos: 2, oem: `${m.prefix}-2902712`, name: "Пружина передней подвески цилиндрическая винтовая", qty: 2, price: 2100, x: 315, y: 150, lx: 130, ly: 130 },
+          { pos: 3, oem: `${m.prefix}-2902820`, name: "Опора верхняя передней стойки в сборе с упорным подшипником", qty: 2, price: 1350, x: 350, y: 65, lx: 520, ly: 65 },
+          { pos: 4, oem: `${m.prefix}-2904020`, name: "Рычаг передней подвески нижний в сборе с сайлентблоками", qty: 2, price: 3400, x: 260, y: 355, lx: 120, ly: 390 },
+          { pos: 5, oem: `${m.prefix}-2904192`, name: "Опора шаровая переднего рычага с защитным чехлом и крепежом", qty: 2, price: 1150, x: 430, y: 365, lx: 550, ly: 380 },
+          { pos: 6, oem: `${m.prefix}-2906050`, name: "Стойка стабилизатора поперечной устойчивости с шарнирами", qty: 2, price: 790, x: 215, y: 250, lx: 110, ly: 245 }
+        ]
+      },
+      {
+        code: "К110",
+        category: "mech",
+        group: "Группа 35 — Тормозная система",
+        title: "Передний дисковый тормозной механизм",
+        subtitle: "Тормозной вентилируемый диск, суппорт, направляющая скоба, колодки и пальцы",
+        carCoords: { x: 155, y: 330, label: "К110 Пер. тормоза" },
+        getParts: (m) => [
+          { pos: 1, oem: `${m.prefix}-3501070`, name: "Диск переднего тормоза вентилируемый чугунный отбалансированный", qty: 2, price: 3200, x: 180, y: 240, lx: 90, ly: 100 },
+          { pos: 2, oem: `${m.prefix}-3501080`, name: "Комплект передних тормозных колодок с противоскрипными пластинами", qty: 1, price: 1650, x: 305, y: 195, lx: 260, ly: 65 },
+          { pos: 3, oem: `${m.prefix}-3501015`, name: "Скоба переднего дискового тормоза направляющая", qty: 2, price: 2400, x: 375, y: 150, lx: 430, ly: 60 },
+          { pos: 4, oem: `${m.prefix}-3501012`, name: "Суппорт тормозной передний в сборе с рабочим цилиндром и поршнем", qty: 2, price: 5900, x: 465, y: 175, lx: 580, ly: 150 },
+          { pos: 5, oem: `${m.prefix}-3501018`, name: "Ремкомплект направляющих пальцев суппорта с пыльниками БРТ", qty: 2, price: 620, x: 250, y: 115, lx: 110, ly: 380 },
+          { pos: 6, oem: `${m.prefix}-3506060`, name: "Шланг тормозной передний гибкий высокого давления", qty: 2, price: 680, x: 510, y: 115, lx: 575, ly: 340 }
+        ]
+      },
+      {
+        code: "К130",
+        category: "mech",
+        group: "Группа 35 — Тормозная система",
+        title: "Задний тормозной механизм и стояночный тормоз",
+        subtitle: "Тормозной барабан, колесный гидроцилиндр, колодки, стяжные пружины и трос ручника",
+        carCoords: { x: 525, y: 330, label: "К130 Зад. тормоза" },
+        getParts: (m) => [
+          { pos: 1, oem: `${m.prefix}-3502070`, name: "Барабан тормозной задний с центрирующим буртиком", qty: 2, price: 2450, x: 175, y: 235, lx: 95, ly: 90 },
+          { pos: 2, oem: `${m.prefix}-3502040`, name: "Цилиндр тормозной колесный задний двухпоршневой самоподводящийся", qty: 2, price: 890, x: 380, y: 115, lx: 380, ly: 45 },
+          { pos: 3, oem: `${m.prefix}-3502090`, name: "Колодки заднего барабанного тормоза с фрикционными накладками (4 шт)", qty: 1, price: 1550, x: 310, y: 230, lx: 550, ly: 150 },
+          { pos: 4, oem: `${m.prefix}-3502035`, name: "Комплект верхних и нижних стяжных пружин задних колодок", qty: 1, price: 380, x: 380, y: 315, lx: 540, ly: 345 },
+          { pos: 5, oem: `${m.prefix}-3507015`, name: "Трос стояночного тормоза (ручника) в защитной оболочке", qty: 2, price: 950, x: 455, y: 270, lx: 575, ly: 250 }
+        ]
+      },
+      {
+        code: "К100",
+        category: "mech",
+        group: "Группа 34 — Рулевое управление",
+        title: "Рулевой механизм, тяги и наконечники",
+        subtitle: "Рулевая рейка в сборе, приводная шестерня, рулевые тяги, наконечники и защитные гофры",
+        carCoords: { x: 225, y: 295, label: "К100 Рулевое" },
+        getParts: (m) => [
+          { pos: 1, oem: `${m.prefix}-3401010`, name: "Механизм рулевой реечного типа в сборе с картером", qty: 1, price: 8900, x: 350, y: 230, lx: 350, ly: 90 },
+          { pos: 2, oem: `${m.prefix}-3414050`, name: "Тяга рулевая с шаровым шарниром левая / правая", qty: 2, price: 1150, x: 170, y: 230, lx: 140, ly: 110 },
+          { pos: 3, oem: `${m.prefix}-3414056`, name: "Наконечник рулевой тяги наружный с конусным пальцем и гайкой", qty: 2, price: 980, x: 95, y: 250, lx: 95, ly: 365 },
+          { pos: 4, oem: `${m.prefix}-3401224`, name: "Чехол защитный гофрированный рулевого механизма БРТ", qty: 2, price: 420, x: 245, y: 230, lx: 250, ly: 365 },
+          { pos: 5, oem: `${m.prefix}-3401065`, name: "Вал-шестерня приводной рулевой рейки с подшипником", qty: 1, price: 1950, x: 295, y: 175, lx: 520, ly: 110 }
+        ]
+      },
+
+      // --- КУЗОВНЫЕ ДЕТАЛИ (category: 'body') ---
+      {
+        code: "Б100",
+        category: "body",
+        group: "Группа 84 / 28 — Кузов (Передок)",
+        title: "Капот, передние крылья, бампер и решётка радиатора",
+        subtitle: "Панель капота, облицовка переднего бампера, усилитель, крылья передние, петли и замок",
+        carCoords: { x: 145, y: 205, label: "Б100 Капот/Бампер" },
+        bodyCoords: { x: 150, y: 190, label: "Б100 Передок / Капот" },
+        getParts: (m) => {
+          const isVestaNg = m.id === "vesta-ng";
+          return [
+            { pos: 1, oem: isVestaNg ? "8450006940" : `${m.prefix}-8402010`, name: "Капот в сборе с внутренним каркасом жесткости (под катафорезный грунт)", qty: 1, price: isVestaNg ? 16500 : 9800, x: 340, y: 95, lx: 340, ly: 35 },
+            { pos: 2, oem: isVestaNg ? "8450039095" : `${m.prefix}-2803015`, name: isVestaNg ? "Облицовка переднего бампера Vesta NG под ПТФ и парктроники" : "Бампер передний полипропиленовый в сборе", qty: 1, price: isVestaNg ? 11400 : 5400, x: 240, y: 335, lx: 105, ly: 390 },
+            { pos: 3, oem: isVestaNg ? "8450039108" : `${m.prefix}-8401012`, name: "Решётка радиатора облицовочная с эмблемой LADA", qty: 1, price: isVestaNg ? 4800 : 2100, x: 240, y: 265, lx: 95, ly: 255 },
+            { pos: 4, oem: isVestaNg ? "8450006921" : `${m.prefix}-8403011`, name: "Крыло переднее левое / правое штампованное стальное", qty: 2, price: isVestaNg ? 7900 : 4200, x: 500, y: 205, lx: 615, ly: 175 },
+            { pos: 5, oem: isVestaNg ? "8450039120" : `${m.prefix}-2803130`, name: "Балка (усилитель) переднего бампера силовая энергопоглощающая", qty: 1, price: 5200, x: 355, y: 375, lx: 560, ly: 390 },
+            { pos: 6, oem: isVestaNg ? "8450006945" : `${m.prefix}-8402050`, name: "Петля капота левая / правая и замок капота с рычагом предохранителя", qty: 2, price: 1450, x: 430, y: 80, lx: 580, ly: 65 }
+          ];
+        }
+      },
+      {
+        code: "Б200",
+        category: "body",
+        group: "Группа 61 / 82 — Двери и остекление",
+        title: "Двери кузова, стеклоподъёмники, замки и боковые зеркала",
+        subtitle: "Панель двери в сборе, опускное стекло, механизм электростеклоподъёмника, зеркало и ручка",
+        carCoords: { x: 345, y: 215, label: "Б200 Двери/Зеркала" },
+        bodyCoords: { x: 355, y: 225, label: "Б200 Двери / Остекление" },
+        getParts: (m) => {
+          const isVestaNg = m.id === "vesta-ng";
+          return [
+            { pos: 1, oem: isVestaNg ? "8450006960" : `${m.prefix}-6100015`, name: "Дверь передняя левая / правая (каркас с наружной панелью в сборе)", qty: 2, price: isVestaNg ? 22500 : 13800, x: 340, y: 270, lx: 110, ly: 320 },
+            { pos: 2, oem: isVestaNg ? "8450007120" : `${m.prefix}-6103210`, name: "Стекло передней двери опускное закалённое атермальное (зелёного оттенка)", qty: 2, price: 2800, x: 350, y: 110, lx: 350, ly: 38 },
+            { pos: 3, oem: isVestaNg ? "8450007150" : `${m.prefix}-6104008`, name: "Механизм электростеклоподъёмника двери в сборе с моторедуктором", qty: 2, price: 3450, x: 530, y: 235, lx: 615, ly: 220 },
+            { pos: 4, oem: isVestaNg ? "8450039515" : `${m.prefix}-8201020`, name: "Зеркало наружное боковое в сборе с электроприводом, обогревом и повторителем", qty: 2, price: isVestaNg ? 6900 : 3200, x: 185, y: 155, lx: 95, ly: 110 },
+            { pos: 5, oem: isVestaNg ? "8450007210" : `${m.prefix}-6105150`, name: "Ручка двери наружная с кронштейном и личинкой замка", qty: 4, price: 1250, x: 425, y: 245, lx: 580, ly: 105 },
+            { pos: 6, oem: isVestaNg ? "8450007230" : `${m.prefix}-6105012`, name: "Замок двери внутренний с электроприводом центральной блокировки", qty: 4, price: 2650, x: 465, y: 310, lx: 590, ly: 375 }
+          ];
+        }
+      },
+      {
+        code: "Б300",
+        category: "body",
+        group: "Группа 56 / 63 — Кузов (Задок)",
+        title: "Крышка багажника / дверь задка, задний бампер и крылья",
+        subtitle: "Крышка багажника (дверь задка), облицовка заднего бампера, заднее крыло, газовые упоры и замок",
+        carCoords: { x: 560, y: 215, label: "Б300 Багажник/Бампер" },
+        bodyCoords: { x: 565, y: 210, label: "Б300 Задок / Багажник" },
+        getParts: (m) => {
+          const isHatchOrSuv = m.body === "hatch" || m.body === "suv";
+          const isVestaNg = m.id === "vesta-ng";
+          return [
+            { pos: 1, oem: isVestaNg ? "8450039140" : `${m.prefix}-${isHatchOrSuv ? '6300014' : '5604010'}`, name: isHatchOrSuv ? "Дверь задка (пятая дверь) в сборе под вклейку стекла" : "Крышка багажника штампованная стальная в сборе", qty: 1, price: isVestaNg ? 17800 : 11200, x: 350, y: 100, lx: 350, ly: 35 },
+            { pos: 2, oem: isVestaNg ? "8450039165" : `${m.prefix}-2804015`, name: isVestaNg ? "Облицовка заднего бампера Vesta NG с диффузором и фальш-патрубками" : "Бампер задний в сборе с креплением", qty: 1, price: isVestaNg ? 10900 : 4900, x: 350, y: 365, lx: 565, ly: 395 },
+            { pos: 3, oem: isVestaNg ? "8450007010" : `${m.prefix}-8404010`, name: "Крыло заднее (наружная панель боковины кузова с колесной аркой)", qty: 2, price: isVestaNg ? 14500 : 7800, x: 175, y: 215, lx: 90, ly: 175 },
+            { pos: 4, oem: `${m.prefix}-6308010`, name: "Упор газовый телескопический крышки багажника / двери задка", qty: 2, price: 890, x: 245, y: 140, lx: 110, ly: 75 },
+            { pos: 5, oem: `${m.prefix}-5606010`, name: "Замок крышки багажника / двери задка с электромеханическим приводом", qty: 1, price: 1850, x: 350, y: 255, lx: 585, ly: 240 },
+            { pos: 6, oem: `${m.prefix}-5601012`, name: "Панель задка нижняя (фартук) и балка усилителя заднего бампера", qty: 1, price: 4600, x: 255, y: 310, lx: 110, ly: 365 }
+          ];
+        }
+      },
+
+      // --- ЭЛЕКТРООБОРУДОВАНИЕ И ДАТЧИКИ ЭСУД (category: 'elec') ---
+      {
+        code: "Е100",
+        category: "elec",
+        group: "Группа 37 — Электрооборудование",
+        title: "Генератор переменного тока в разборе",
+        subtitle: "Генератор в сборе, регулятор напряжения со щётками, диодный мост, ротор, статор и шкив",
+        carCoords: { x: 155, y: 245, label: "Е100 Генератор" },
+        elecCoords: { x: 150, y: 245, label: "Е100 Генератор 14В" },
+        getParts: (m) => {
+          const isVesta = m.family === "vesta";
+          return [
+            { pos: 1, oem: isVesta ? "8450030638" : `${m.engPrefix}-3701010`, name: isVesta ? "Генератор переменного тока 14В 115А / 150А в сборе (КЗАТЭ / Valeo)" : "Генератор переменного тока 14В 90А / 115А в сборе (КЗАТЭ / Прамо)", qty: 1, price: isVesta ? 14800 : 8900, x: 340, y: 230, lx: 340, ly: 55 },
+            { pos: 2, oem: isVesta ? "8450030642" : "21700-3702010-00", name: "Регулятор напряжения электронный в сборе со щёточным узлом (ОРБИТА / ВТН)", qty: 1, price: 1250, x: 525, y: 175, lx: 590, ly: 85 },
+            { pos: 3, oem: isVesta ? "8450030645" : "21100-3701315-00", name: "Блок выпрямительный генератора на 6/8 силовых диодах (диодный мост «подкова»)", qty: 1, price: 1650, x: 465, y: 240, lx: 590, ly: 295 },
+            { pos: 4, oem: `${m.engPrefix}-3701200`, name: "Ротор генератора в сборе с обмоткой возбуждения и контактными медными кольцами", qty: 1, price: 3400, x: 265, y: 230, lx: 220, ly: 390 },
+            { pos: 5, oem: `${m.engPrefix}-3701100`, name: "Статор генератора с трехфазной медной обмоткой и магнитопроводом", qty: 1, price: 2950, x: 365, y: 230, lx: 410, ly: 390 },
+            { pos: 6, oem: `${m.engPrefix}-3701051`, name: "Шкив генератора поликлиновой 6PK и подшипник передней крышки 6303-2RS (SKF)", qty: 1, price: 1100, x: 120, y: 230, lx: 95, ly: 105 }
+          ];
+        }
+      },
+      {
+        code: "Е150",
+        category: "elec",
+        group: "Группа 37 — Электрооборудование",
+        title: "Стартер с планетарным редуктором в разборе",
+        subtitle: "Стартер в сборе, втягивающее реле, бендикс (обгонная муфта), якорь, статор и щёточный узел",
+        carCoords: { x: 235, y: 255, label: "Е150 Стартер" },
+        elecCoords: { x: 245, y: 265, label: "Е150 Стартер ДВС" },
+        getParts: (m) => {
+          const isVesta = m.family === "vesta";
+          return [
+            { pos: 1, oem: isVesta ? "8450030635" : `${m.engPrefix}-3708010`, name: "Стартер редукторный 12В 1.4–1.6 кВт на постоянных магнитах в сборе (КЗАТЭ / БАТЭ)", qty: 1, price: isVesta ? 11200 : 6800, x: 370, y: 270, lx: 370, ly: 395 },
+            { pos: 2, oem: `${m.engPrefix}-3708800`, name: "Реле стартера тяговое электромагнитное (втягивающее реле на 2/3 шпильки)", qty: 1, price: 1650, x: 255, y: 125, lx: 255, ly: 42 },
+            { pos: 3, oem: `${m.engPrefix}-3708600`, name: "Привод стартера с роликовой обгонной муфтой и шестерней (бендикс 9/11 зубьев)", qty: 1, price: 1150, x: 165, y: 270, lx: 105, ly: 385 },
+            { pos: 4, oem: `${m.engPrefix}-3708200`, name: "Якорь стартера с коллектором и солнечной шестерней планетарного редуктора", qty: 1, price: 2800, x: 325, y: 270, lx: 430, ly: 105 },
+            { pos: 5, oem: `${m.engPrefix}-3708300`, name: "Держатель щёток стартера в сборе с медно-графитовыми щётками и пружинами", qty: 1, price: 790, x: 525, y: 270, lx: 590, ly: 165 },
+            { pos: 6, oem: `${m.engPrefix}-3708400`, name: "Крышка стартера со стороны привода («маска» с опорной втулкой) и вилка бендикса", qty: 1, price: 1350, x: 125, y: 215, lx: 90, ly: 110 }
+          ];
+        }
+      },
+      {
+        code: "Е200",
+        category: "elec",
+        group: "Группа 37 / 14 — Управление двигателем (ЭСУД)",
+        title: "ЭБУ двигателя, катушки зажигания и датчики ЭСУД",
+        subtitle: "Контроллер ЭБУ, катушки зажигания, ДПКВ, ДПРВ (датчик фаз), ДАД/ДМРВ, лямбда-зонд и ДТОЖ",
+        carCoords: { x: 215, y: 185, label: "Е200 ЭБУ/Датчики" },
+        elecCoords: { x: 315, y: 175, label: "Е200 ЭБУ & Датчики" },
+        getParts: (m) => {
+          const isVesta = m.family === "vesta";
+          const is16v = m.engine.includes("16V");
+          return [
+            { pos: 1, oem: isVesta ? "8450086942" : `${m.prefix}-1411020`, name: `Контроллер ЭСУД (Электронный блок управления двигателем ${m.ecu})`, qty: 1, price: isVesta ? 19500 : 12400, x: 155, y: 130, lx: 95, ly: 45 },
+            { pos: 2, oem: is16v ? "21120-3705010-13" : "21110-3705010-00", name: is16v ? "Катушка зажигания индивидуальная в свечной колодец (СОАТЭ / Bosch)" : "Катушка (модуль) зажигания четырехвыводная высоковольтная", qty: is16v ? 4 : 1, price: is16v ? 1850 : 2650, x: 350, y: 125, lx: 350, ly: 42 },
+            { pos: 3, oem: "21120-3847010-04", name: "Датчик положения коленчатого вала индуктивный (ДПКВ на 58 зубьев репера)", qty: 1, price: 650, x: 155, y: 310, lx: 95, ly: 395 },
+            { pos: 4, oem: `${m.engPrefix}-3706040`, name: "Датчик фаз (положения распределительного вала на эффекте Холла — ДПРВ)", qty: 1, price: 980, x: 280, y: 310, lx: 255, ly: 395 },
+            { pos: 5, oem: isVesta ? "8450030715" : "21126-1130010-00", name: isVesta ? "Датчик абсолютного давления и температуры воздуха во впускном ресивере (ДАД)" : "Датчик массового расхода воздуха пленочный (ДМРВ ИТЭЛМА / Bosch)", qty: 1, price: isVesta ? 1950 : 4200, x: 525, y: 130, lx: 585, ly: 45 },
+            { pos: 6, oem: isVesta ? "8450030720" : "21120-3850010-00", name: "Датчик концентрации кислорода с подогревом (Лямбда-зонд до/после катализатора)", qty: 2, price: 3400, x: 425, y: 310, lx: 430, ly: 395 },
+            { pos: 7, oem: "21120-3851010-00", name: "Датчик температуры охлаждающей жидкости (ДТОЖ в термостат) и датчик детонации (ДД)", qty: 1, price: 580, x: 555, y: 310, lx: 590, ly: 395 }
+          ];
+        }
+      },
+      {
+        code: "Е300",
+        category: "elec",
+        group: "Группа 37 — Наружное освещение",
+        title: "Блок-фары головного света, ПТФ и задние фонари",
+        subtitle: "Фары передние (LED / Галоген с ДХО и корректором), противотуманные фары и задние фонари",
+        carCoords: { x: 80, y: 250, label: "Е300 Фары/Оптика" },
+        bodyCoords: { x: 80, y: 245, label: "Е300 Фары / Фонари" },
+        elecCoords: { x: 80, y: 215, label: "Е300 Светотехника" },
+        getParts: (m) => {
+          const isVestaNg = m.id === "vesta-ng";
+          return [
+            { pos: 1, oem: isVestaNg ? "8450039481" : `${m.prefix}-3711011`, name: isVestaNg ? "Блок-фара передняя левая полностью светодиодная (Full LED Vesta NG)" : "Блок-фара передняя левая в сборе с электрокорректором и ДХО", qty: 1, price: isVestaNg ? 24500 : 6800, x: 195, y: 125, lx: 95, ly: 65 },
+            { pos: 2, oem: isVestaNg ? "8450039482" : `${m.prefix}-3711010`, name: isVestaNg ? "Блок-фара передняя правая полностью светодиодная (Full LED Vesta NG)" : "Блок-фара передняя правая в сборе с электрокорректором и ДХО", qty: 1, price: isVestaNg ? 24500 : 6800, x: 485, y: 125, lx: 590, ly: 65 },
+            { pos: 3, oem: isVestaNg ? "8450039488" : `${m.prefix}-3743010`, name: "Фара противотуманная (ПТФ) переднего бампера с монтажной рамкой", qty: 2, price: 2450, x: 195, y: 245, lx: 95, ly: 245 },
+            { pos: 4, oem: isVestaNg ? "8450039493" : `${m.prefix}-3716011`, name: isVestaNg ? "Фонарь задний наружный светодиодный (на крыле Vesta NG)" : "Фонарь задний комбинированный в сборе с платой ламп", qty: 2, price: isVestaNg ? 8400 : 3200, x: 225, y: 350, lx: 115, ly: 395 },
+            { pos: 5, oem: isVestaNg ? "8450039495" : `${m.prefix}-3717010`, name: isVestaNg ? "Фонарь задний внутренний (на крышке багажника) + плафон номера" : "Фонарь освещения номерного знака и дополнительный стоп-сигнал", qty: 2, price: isVestaNg ? 5600 : 850, x: 455, y: 350, lx: 575, ly: 395 },
+            { pos: 6, oem: isVestaNg ? "8450039499" : "21900-3711200", name: isVestaNg ? "Блок управления светодиодным светом и ДХО фары" : "Комплект ламп головного света (H7 / H4 / W21/5W ДХО)", qty: 2, price: isVestaNg ? 4900 : 650, x: 340, y: 190, lx: 340, ly: 55 }
+          ];
+        }
+      }
+    ];
+
+    /* =========================================================================
+       3. ПЕРЕМЕННЫЕ СОСТОЯНИЯ ПРИЛОЖЕНИЯ
+       ========================================================================= */
+    let currentFamily = "all";
+    let currentTreeFilter = "mech";
+    let currentModel = VAZ_MODELS[0]; // Lada Vesta NG 2026
+    let currentPoster = AVTOALL_POSTERS[0]; // Плакат А400 (Топливная система и дроссельный узел)
+    let currentViewMode = "poster"; // Сразу открываем сборочный чертёж А400
+    let isLightBlueprint = false;
+    let currentZoom = 1.0;
+    let selectedPos = null;
+    let orderCart = [];
+
+    window.addEventListener("DOMContentLoaded", () => {
+      populateModelSelect(VAZ_MODELS);
+      const allFamilyButton = document.querySelector('.fam-btn[data-fam="all"]');
+      if (allFamilyButton) allFamilyButton.textContent = `Все модели (${VAZ_MODELS.length})`;
+      const posterCount = document.querySelector(".bg-\[\#111827\] .font-mono");
+      setTreeFilter("mech");
+      setViewMode("poster");
+    });
+
+    function populateModelSelect(list) {
+      const sel = document.getElementById("modelSelect");
+      sel.innerHTML = "";
+      list.forEach(m => {
+        const opt = document.createElement("option");
+        opt.value = m.id;
+        opt.textContent = m.name;
+        sel.appendChild(opt);
+      });
+      currentModel = list[0] || VAZ_MODELS[0];
+    }
+
+    function filterFamily(fam) {
+      currentFamily = fam;
+      document.querySelectorAll(".fam-btn").forEach(b => {
+        if (b.dataset.fam === fam) {
+          b.className = "fam-btn px-2.5 py-1 rounded bg-amber-500 text-black font-bold whitespace-nowrap";
+        } else {
+          b.className = "fam-btn px-2.5 py-1 rounded bg-[#162032] text-slate-300 hover:bg-[#1E293B] whitespace-nowrap border border-[#26354D]";
+        }
+      });
+
+      const list = fam === "all" ? VAZ_MODELS : VAZ_MODELS.filter(m => m.family === fam);
+      populateModelSelect(list);
+      refreshWorkspace();
+    }
+
+    function onModelSelectChange() {
+      const id = document.getElementById("modelSelect").value;
+      currentModel = VAZ_MODELS.find(m => m.id === id) || VAZ_MODELS[0];
+      refreshWorkspace();
+    }
+
+    function setTreeFilter(cat) {
+      currentTreeFilter = cat;
+      ["all", "mech", "body", "elec"].forEach(k => {
+        const btn = document.getElementById(`treeTab_${k}`);
+        if (k === cat) {
+          btn.className = "py-1 rounded font-bold bg-amber-500 text-black";
+        } else {
+          btn.className = "py-1 rounded font-medium text-slate-400 hover:text-white";
+        }
+      });
+      buildPostersTree();
+    }
+
+    /* Построение дерева плакатов слева */
+    function buildPostersTree() {
+      const container = document.getElementById("postersTreeContainer");
+      container.innerHTML = "";
+
+      const filteredPosters = currentTreeFilter === "all"
+        ? AVTOALL_POSTERS
+        : AVTOALL_POSTERS.filter(p => p.category === currentTreeFilter);
+
+      filteredPosters.forEach(p => {
+        const isActive = p.code === currentPoster.code && currentViewMode === "poster";
+        let badgeStyle = "bg-[#1F2937] text-amber-400";
+        if (isActive) {
+          badgeStyle = "bg-amber-500 text-black";
+        } else if (p.category === "elec") {
+          badgeStyle = "bg-emerald-950 text-emerald-400 border border-emerald-800/60";
+        } else if (p.category === "body") {
+          badgeStyle = "bg-cyan-950 text-cyan-400 border border-cyan-800/60";
+        }
+
+        const btn = document.createElement("button");
+        btn.className = `w-full text-left p-2.5 rounded-lg border transition-all flex items-start space-x-2.5 ${
+          isActive 
+            ? "bg-amber-500/15 border-amber-500 text-white shadow" 
+            : "bg-[#090D16] border-[#1F2937] text-slate-300 hover:border-[#374151] hover:bg-[#162032]"
+        }`;
+        btn.onclick = () => {
+          currentPoster = p;
+          selectedPos = null;
+          setViewMode("poster");
+        };
+        btn.innerHTML = `
+          <span class="font-mono text-[11px] font-bold px-1.5 py-0.5 rounded ${badgeStyle}">
+            ${p.code}
+          </span>
+          <div class="flex-1 min-w-0">
+            <div class="text-[10px] text-slate-500 uppercase font-semibold">${p.group}</div>
+            <div class="text-xs font-semibold truncate">${p.title}</div>
+          </div>
+        `;
+        container.appendChild(btn);
+      });
+    }
+
+    /* Переключение режима: Шасси vs Кузов vs Электрика vs Чертёж узла */
+    function setViewMode(mode) {
+      currentViewMode = mode;
+      const modes = {
+        car: document.getElementById("btnViewCar"),
+        body: document.getElementById("btnViewBody"),
+        elec: document.getElementById("btnViewElec"),
+        poster: document.getElementById("btnViewPoster")
+      };
+
+      Object.entries(modes).forEach(([k, btn]) => {
+        if (k === mode) {
+          btn.className = "px-2.5 py-1 rounded text-xs font-semibold transition-all flex items-center space-x-1.5 bg-amber-500 text-black";
+        } else {
+          btn.className = "px-2.5 py-1 rounded text-xs font-semibold transition-all flex items-center space-x-1.5 text-slate-400 hover:text-white";
+        }
+      });
+
+      buildPostersTree();
+      refreshWorkspace();
+    }
+
+    /* Обновление всей рабочей станции */
+    function refreshWorkspace() {
+      document.getElementById("carDriveBadge").textContent = currentModel.drive;
+      document.getElementById("infoEngine").textContent = currentModel.engine;
+      document.getElementById("infoGearbox").textContent = currentModel.gearbox;
+      document.getElementById("infoPrefix").textContent = `${currentModel.prefix} / ${currentModel.engPrefix}`;
+      document.getElementById("orderCarSubtitle").textContent = `Автомобиль: ${currentModel.name} (${currentModel.engine})`;
+
+      const parts = currentPoster.getParts(currentModel);
+      renderSpecificationList(parts);
+
+      if (currentViewMode === "car") {
+        document.getElementById("posterIndexBadge").textContent = "РЕНТГЕН ШАССИ";
+        document.getElementById("canvasTitle").textContent = `${currentModel.name} — Схема шасси, питания, охлаждения, ДВС и КПП`;
+        document.getElementById("canvasSubtitle").textContent = "Кликните на топливную систему (А400), охлаждение (А300), КПП (Д200) или любой узел на схеме";
+        drawCarXraySchematic(currentModel);
+      } else if (currentViewMode === "body") {
+        document.getElementById("posterIndexBadge").textContent = "СХЕМА КУЗОВА";
+        document.getElementById("canvasTitle").textContent = `${currentModel.name} — Схема кузовных панелей и оптики`;
+        document.getElementById("canvasSubtitle").textContent = "Выберите элемент кузова (капот, двери, багажник, фары) для открытия деталировки с номерами OEM";
+        drawBodyExteriorSchematic(currentModel);
+      } else if (currentViewMode === "elec") {
+        document.getElementById("posterIndexBadge").textContent = "СХЕМА ЭЛЕКТРИКИ";
+        document.getElementById("canvasTitle").textContent = `${currentModel.name} — Архитектура электрооборудования и ЭСУД`;
+        document.getElementById("canvasSubtitle").textContent = "Нажмите на генератор, стартер, ЭБУ или оптику на схеме для открытия взрыв-схемы узла";
+        drawElectricalArchitectureSchematic(currentModel);
+      } else {
+        document.getElementById("posterIndexBadge").textContent = `ПЛАКАТ ${currentPoster.code}`;
+        document.getElementById("canvasTitle").textContent = `${currentPoster.title} (${currentModel.name})`;
+        document.getElementById("canvasSubtitle").textContent = currentPoster.subtitle;
+        drawPosterExplodedView(currentPoster, parts);
+      }
+      resetDrawingZoom();
+    }
+
+    /* =========================================================================
+       4A. ИНТЕРАКТИВНАЯ СХЕМА БОРТОВОЙ ЭЛЕКТРОСЕТИ И ЭСУД АВТОМОБИЛЯ
+       ========================================================================= */
+    function drawElectricalArchitectureSchematic(model) {
+      const svg = document.getElementById("mainTechnicalSvg");
+      const elecPosters = AVTOALL_POSTERS.filter(p => p.category === "elec");
+
+      svg.innerHTML = `
+        <text x="35" y="28" fill="#10B981" font-size="11" font-weight="bold" font-family="monospace">СХЕМА РАСПОЛОЖЕНИЯ УЗЛОВ ЭЛЕКТРООБОРУДОВАНИЯ, СИЛОВЫХ ЦЕПЕЙ 12В И ДАТЧИКОВ ЭСУД</text>
+        <path d="M 60 320 L 70 235 L 195 205 L 285 130 L 490 130 L 570 205 L 640 225 L 635 320 Z" class="svg-part-body" fill="#0F172A" fill-opacity="0.7" stroke="#334155" stroke-width="2" stroke-dasharray="6 3" />
+
+        <rect x="135" y="150" width="54" height="36" rx="4" fill="#1E293B" stroke="#EF4444" stroke-width="2.5" />
+        <text x="162" y="172" fill="#FFFFFF" font-size="10" font-weight="bold" font-family="monospace" text-anchor="middle">АКБ 12V</text>
+
+        <rect x="235" y="150" width="52" height="34" rx="4" fill="#1E293B" stroke="#F59E0B" stroke-width="2" />
+        <text x="261" y="171" fill="#F59E0B" font-size="9" font-weight="bold" font-family="monospace" text-anchor="middle">БЛОК FUSE</text>
+
+        <path d="M 150 186 L 150 245 L 245 265" fill="none" stroke="#EF4444" stroke-width="3.5" />
+        <path d="M 189 168 L 235 168 L 315 175" fill="none" stroke="#F59E0B" stroke-width="2.5" />
+        <path d="M 315 175 L 205 225 M 315 175 L 355 285" fill="none" stroke="#10B981" stroke-width="2.5" stroke-dasharray="5 3" />
+        <path d="M 261 184 L 80 215 M 261 184 L 615 245" fill="none" stroke="#38BDF8" stroke-width="2" />
+
+        <circle cx="150" cy="245" r="18" fill="#162032" stroke="#10B981" stroke-width="3" />
+        <text x="150" y="249" fill="#10B981" font-size="10" font-weight="bold" font-family="monospace" text-anchor="middle">G</text>
+
+        <rect x="225" y="250" width="42" height="26" rx="5" fill="#162032" stroke="#10B981" stroke-width="3" />
+        <text x="246" y="267" fill="#10B981" font-size="10" font-weight="bold" font-family="monospace" text-anchor="middle">M</text>
+
+        <rect x="295" y="155" width="56" height="40" rx="5" fill="#064E3B" stroke="#10B981" stroke-width="2.5" />
+        <text x="323" y="179" fill="#FFFFFF" font-size="10" font-weight="bold" font-family="monospace" text-anchor="middle">ЭБУ</text>
+
+        <polygon points="62,205 98,200 95,228 62,225" fill="#0284C7" stroke="#FFFFFF" stroke-width="2" />
+        <polygon points="605,230 635,235 632,262 602,258" fill="#DC2626" stroke="#FFFFFF" stroke-width="2" />
+
+        <rect x="45" y="345" width="610" height="85" rx="10" fill="#0D1320" stroke="#1F2937" stroke-width="2" />
+        <text x="65" y="368" fill="#94A3B8" font-size="10" font-weight="bold" font-family="monospace">КОНТРОЛЬНЫЕ ПАРАМЕТРЫ ЭЛЕКТРОСЕТИ АВТОВАЗ (${model.ecu}):</text>
+        <text x="65" y="390" fill="#10B981" font-size="11" font-family="monospace">• Заряд генератора (Е100): 13.8–14.5 В   |   • Сопротивление ДПКВ (Е200): 550–750 Ом</text>
+        <text x="65" y="412" fill="#38BDF8" font-size="11" font-family="monospace">• Ток стартера (Е150): 140–180 А (ХХ)     |   • Шина CAN-Bus (пины 6-14 OBD): 60 Ом</text>
+
+        ${elecPosters.map(p => `
+          <g class="car-node-spot cursor-pointer" onclick="openPosterFromCar('${p.code}')">
+            <line x1="${p.elecCoords.x}" y1="${p.elecCoords.y}" x2="${p.elecCoords.x}" y2="${p.elecCoords.y - 45}" stroke="#10B981" stroke-width="2.5" />
+            <circle cx="${p.elecCoords.x}" cy="${p.elecCoords.y}" r="7" fill="#10B981" stroke="#FFFFFF" stroke-width="2" />
+            <rect x="${p.elecCoords.x - 68}" y="${p.elecCoords.y - 68}" width="136" height="25" rx="6" fill="#10B981" stroke="#FFFFFF" stroke-width="1.5" />
+            <text x="${p.elecCoords.x}" y="${p.elecCoords.y - 52}" fill="#000000" font-size="10" font-weight="bold" font-family="monospace" text-anchor="middle">${p.elecCoords.label}</text>
+          </g>
+        `).join("")}
+      `;
+    }
+
+    /* =========================================================================
+       4B. ИНТЕРАКТИВНАЯ СХЕМА КУЗОВА И ОПТИКИ
+       ========================================================================= */
+    function drawBodyExteriorSchematic(model) {
+      const svg = document.getElementById("mainTechnicalSvg");
+
+      let sideSilhouette = "";
+      let doorSplitLines = "";
+
+      if (model.body === "suv") {
+        sideSilhouette = "M 75 240 L 80 175 L 185 155 L 240 85 L 535 85 L 570 170 L 580 240 L 540 240 A 40 40 0 0 0 460 240 L 210 240 A 40 40 0 0 0 130 240 Z";
+        doorSplitLines = "M 245 88 L 245 235 M 405 88 L 405 235 M 255 96 L 390 96 L 390 155 L 205 155 Z M 415 96 L 525 96 L 548 155 L 415 155 Z";
+      } else if (model.body === "hatch") {
+        sideSilhouette = "M 65 245 L 75 185 L 195 160 L 275 90 L 515 90 L 585 170 L 595 245 L 550 245 A 38 38 0 0 0 470 245 L 205 245 A 38 38 0 0 0 125 245 Z";
+        doorSplitLines = "M 235 155 L 235 240 M 375 92 L 375 240 M 495 92 L 495 240 M 280 100 L 365 100 L 365 155 L 215 155 Z M 385 100 L 490 100 L 545 155 L 385 155 Z";
+      } else if (model.body === "classic") {
+        sideSilhouette = "M 60 245 L 65 175 L 205 165 L 260 95 L 465 95 L 520 165 L 625 175 L 620 245 L 555 245 A 38 38 0 0 0 475 245 L 200 245 A 38 38 0 0 0 120 245 Z";
+        doorSplitLines = "M 230 165 L 230 240 M 365 95 L 365 240 M 485 165 L 485 240 M 270 104 L 355 104 L 355 160 L 220 160 Z M 375 104 L 455 104 L 500 160 L 375 160 Z";
+      } else {
+        sideSilhouette = "M 55 245 L 70 180 L 190 155 L 280 90 L 480 90 L 560 155 L 635 170 L 630 245 L 565 245 A 40 40 0 0 0 480 245 L 200 245 A 40 40 0 0 0 115 245 Z";
+        doorSplitLines = "M 225 155 L 225 240 M 375 90 L 375 240 M 510 155 L 510 240 M 290 100 L 365 100 L 365 152 L 210 152 Z M 385 100 L 475 100 L 540 152 L 385 152 Z";
+      }
+
+      const bodyPosters = AVTOALL_POSTERS.filter(p => p.category === "body" || p.code === "Е300");
+
+      svg.innerHTML = `
+        <text x="35" y="30" fill="#38BDF8" font-size="11" font-weight="bold" font-family="monospace">ПРОЕКЦИЯ А: НАРУЖНЫЕ КУЗОВНЫЕ ПАНЕЛИ И ДВЕРИ (БОКОВОЙ ВИД)</text>
+        <line x1="30" y1="255" x2="670" y2="255" class="svg-axis" stroke="#334155" stroke-width="1.5" stroke-dasharray="10 5" />
+
+        <path d="${sideSilhouette}" class="svg-part-body" fill="#162238" stroke="#38BDF8" stroke-width="2.5" />
+        <path d="${doorSplitLines}" fill="#090D16" fill-opacity="0.45" stroke="#94A3B8" stroke-width="1.8" />
+
+        <path d="M 55 245 L 95 245 L 95 195 L 68 185 Z" fill="#F59E0B" fill-opacity="0.35" stroke="#F59E0B" stroke-width="2" />
+        <polygon points="68,182 110,175 105,195 68,195" fill="#06B6D4" stroke="#FFFFFF" stroke-width="1.5" />
+
+        <path d="M 595 245 L 635 245 L 635 190 L 600 190 Z" fill="#F59E0B" fill-opacity="0.35" stroke="#F59E0B" stroke-width="2" />
+        <polygon points="605,168 634,172 632,192 600,188" fill="#EF4444" stroke="#FFFFFF" stroke-width="1.5" />
+
+        <rect x="220" y="138" width="22" height="14" rx="4" fill="#06B6D4" stroke="#FFFFFF" stroke-width="1.5" />
+        <rect x="335" y="172" width="24" height="6" rx="2" fill="#F59E0B" />
+        <rect x="465" y="172" width="24" height="6" rx="2" fill="#F59E0B" />
+
+        <circle cx="158" cy="245" r="38" fill="#090D16" stroke="#64748B" stroke-width="5" />
+        <circle cx="158" cy="245" r="20" fill="#1E293B" stroke="#CBD5E1" stroke-width="2" />
+        <circle cx="522" cy="245" r="38" fill="#090D16" stroke="#64748B" stroke-width="5" />
+        <circle cx="522" cy="245" r="20" fill="#1E293B" stroke="#CBD5E1" stroke-width="2" />
+
+        <text x="35" y="305" fill="#38BDF8" font-size="11" font-weight="bold" font-family="monospace">ПРОЕКЦИЯ Б: КАПОТ, КРЫЛЬЯ, КРЫША И БАГАЖНИК (ВИД В ПЛАНЕ)</text>
+        <line x1="40" y1="380" x2="660" y2="380" class="svg-axis" stroke="#EF4444" stroke-width="1.2" stroke-dasharray="12 4 2 4" />
+
+        <rect x="85" y="325" width="520" height="110" rx="28" class="svg-part-body" fill="#111C2D" stroke="#38BDF8" stroke-width="2" />
+        <path d="M 105 335 L 225 330 L 225 430 L 105 425 Z" fill="#1E293B" stroke="#F59E0B" stroke-width="2" onclick="openPosterFromCar('Б100')" class="cursor-pointer" />
+        <text x="165" y="384" fill="#F59E0B" font-size="10" font-weight="bold" font-family="monospace" text-anchor="middle">КАПОТ (Б100)</text>
+        <path d="M 225 330 L 275 340 L 275 420 L 225 430 Z" fill="#090D16" stroke="#38BDF8" stroke-width="1.5" />
+        <rect x="275" y="340" width="185" height="80" fill="#162238" stroke="#94A3B8" stroke-width="1.5" />
+        <text x="367" y="384" fill="#CBD5E1" font-size="10" font-family="monospace" text-anchor="middle">КРЫША / ДВЕРИ (Б200)</text>
+        <path d="M 495 332 L 590 338 L 590 422 L 495 428 Z" fill="#1E293B" stroke="#06B6D4" stroke-width="2" onclick="openPosterFromCar('Б300')" class="cursor-pointer" />
+        <text x="542" y="384" fill="#06B6D4" font-size="10" font-weight="bold" font-family="monospace" text-anchor="middle">ЗАДОК (Б300)</text>
+
+        ${bodyPosters.map(p => `
+          <g class="car-node-spot cursor-pointer" onclick="openPosterFromCar('${p.code}')">
+            <line x1="${p.bodyCoords.x}" y1="${p.bodyCoords.y}" x2="${p.bodyCoords.x}" y2="${p.bodyCoords.y - 45}" stroke="#06B6D4" stroke-width="2" />
+            <circle cx="${p.bodyCoords.x}" cy="${p.bodyCoords.y}" r="7" fill="#06B6D4" stroke="#FFFFFF" stroke-width="2" />
+            <rect x="${p.bodyCoords.x - 68}" y="${p.bodyCoords.y - 68}" width="136" height="24" rx="5" fill="#06B6D4" stroke="#FFFFFF" stroke-width="1.5" />
+            <text x="${p.bodyCoords.x}" y="${p.bodyCoords.y - 52}" fill="#000000" font-size="10" font-weight="bold" font-family="monospace" text-anchor="middle">${p.bodyCoords.label}</text>
+          </g>
+        `).join("")}
+      `;
+    }
+
+    /* =========================================================================
+       4C. ИНТЕРАКТИВНАЯ РЕНТГЕН-СХЕМА ШАССИ, ТОПЛИВНОЙ МАГИСТРАЛИ, ОХЛАЖДЕНИЯ, ДВС И КПП
+       ========================================================================= */
+    function drawCarXraySchematic(model) {
+      const svg = document.getElementById("mainTechnicalSvg");
+
+      let bodyPath = "";
+      let roofWindows = "";
+
+      if (model.body === "suv") {
+        bodyPath = "M 75 310 L 75 230 L 185 210 L 245 125 L 545 125 L 580 225 L 590 310 L 555 310 A 48 48 0 0 0 455 310 L 215 310 A 48 48 0 0 0 115 310 Z";
+        roofWindows = "M 255 138 L 375 138 L 375 205 L 205 205 Z M 390 138 L 530 138 L 555 205 L 390 205 Z";
+      } else if (model.body === "hatch") {
+        bodyPath = "M 65 315 L 75 245 L 195 215 L 280 135 L 520 135 L 590 225 L 605 315 L 560 315 A 44 44 0 0 0 470 315 L 205 315 A 44 44 0 0 0 115 315 Z";
+        roofWindows = "M 290 148 L 400 148 L 400 210 L 215 210 Z M 415 148 L 510 148 L 565 210 L 415 210 Z";
+      } else if (model.body === "classic") {
+        bodyPath = "M 60 315 L 65 235 L 210 220 L 265 140 L 470 140 L 525 220 L 635 230 L 630 315 L 565 315 A 42 42 0 0 0 480 315 L 200 315 A 42 42 0 0 0 115 315 Z";
+        roofWindows = "M 275 150 L 375 150 L 375 215 L 225 215 Z M 390 150 L 460 150 L 505 215 L 390 215 Z";
+      } else {
+        bodyPath = "M 55 315 L 70 240 L 190 210 L 285 135 L 485 135 L 565 210 L 640 225 L 635 315 L 570 315 A 45 45 0 0 0 480 315 L 200 315 A 45 45 0 0 0 110 315 Z";
+        roofWindows = "M 295 147 L 400 147 L 400 205 L 210 205 Z M 415 147 L 480 147 L 545 205 L 415 205 Z";
+      }
+
+      const mechPosters = AVTOALL_POSTERS.filter(p => p.category === "mech");
+
+      svg.innerHTML = `
+        <line x1="30" y1="330" x2="670" y2="330" class="svg-axis" stroke="#334155" stroke-width="1.5" stroke-dasharray="10 5" />
+        <line x1="155" y1="80" x2="155" y2="410" class="svg-axis" stroke="#334155" stroke-width="1" stroke-dasharray="6 4" />
+        <line x1="525" y1="80" x2="525" y2="410" class="svg-axis" stroke="#334155" stroke-width="1" stroke-dasharray="6 4" />
+
+        <line x1="155" y1="400" x2="525" y2="400" stroke="#06B6D4" stroke-width="1.5" />
+        <text x="340" y="393" fill="#06B6D4" font-size="11" font-family="monospace" text-anchor="middle">КОЛЁСНАЯ БАЗА АВТОМОБИЛЯ • РЕНТГЕН-ПРОЕКЦИЯ ДВС, ПИТАНИЯ, ОХЛАЖДЕНИЯ, КПП И ШАССИ</text>
+
+        <path d="${bodyPath}" class="svg-part-body" fill="#111C2D" fill-opacity="0.7" stroke="#38BDF8" stroke-width="2.5" />
+        <path d="${roofWindows}" fill="#090D16" fill-opacity="0.6" stroke="#38BDF8" stroke-width="1.5" stroke-dasharray="4 2" />
+
+        <!-- Кассета радиатора охлаждения и электровентилятора (А300) -->
+        <rect x="92" y="195" width="22" height="65" rx="3" fill="#0EA5E9" stroke="#FFFFFF" stroke-width="1.5" />
+        <line x1="114" y1="210" x2="145" y2="210" stroke="#EF4444" stroke-width="3" />
+        <line x1="114" y1="245" x2="145" y2="245" stroke="#38BDF8" stroke-width="3" />
+
+        <!-- Топливный бак с погружным модулем ЭБН и магистраль к рампе форсунок (А400) -->
+        <rect x="435" y="262" width="60" height="32" rx="6" fill="#7C2D12" stroke="#F59E0B" stroke-width="2" />
+        <circle cx="465" cy="275" r="8" fill="#F59E0B" />
+        <path d="M 435 278 L 210 278 L 210 190" fill="none" stroke="#F59E0B" stroke-width="2.5" stroke-dasharray="5 3" />
+
+        <!-- ДВС + ГРМ -->
+        <rect x="145" y="185" width="90" height="75" rx="6" fill="#1E293B" stroke="#F59E0B" stroke-width="2" />
+        <circle cx="165" cy="205" r="12" fill="#090D16" stroke="#F59E0B" stroke-width="2" />
+        <circle cx="165" cy="240" r="10" fill="#090D16" stroke="#06B6D4" stroke-width="2" />
+
+        <!-- Сцепление (Д100) и КПП (Д200) -->
+        <path d="M 235 210 L 315 220 L 315 262 L 235 255 Z" fill="#1E293B" stroke="#06B6D4" stroke-width="2.5" />
+
+        <!-- Раздаточная коробка Нивы и карданы (Д250) -->
+        <rect x="345" y="255" width="55" height="45" rx="6" fill="#162032" stroke="#10B981" stroke-width="2.5" />
+        <line x1="315" y1="245" x2="345" y2="270" stroke="#F59E0B" stroke-width="4" />
+        <line x1="345" y1="285" x2="155" y2="330" stroke="#10B981" stroke-width="4" stroke-dasharray="6 3" />
+        <line x1="400" y1="285" x2="525" y2="330" stroke="#10B981" stroke-width="4" stroke-dasharray="6 3" />
+
+        <!-- Стойки подвески -->
+        <line x1="155" y1="330" x2="175" y2="170" stroke="#10B981" stroke-width="5" />
+        <line x1="525" y1="330" x2="505" y2="195" stroke="#10B981" stroke-width="5" />
+
+        <!-- Колёса и тормоза -->
+        <circle cx="155" cy="330" r="46" fill="#090D16" stroke="#64748B" stroke-width="6" />
+        <circle cx="155" cy="330" r="30" fill="#1E293B" stroke="#94A3B8" stroke-width="2" />
+        <circle cx="525" cy="330" r="46" fill="#090D16" stroke="#64748B" stroke-width="6" />
+        <circle cx="525" cy="330" r="30" fill="#1E293B" stroke="#F59E0B" stroke-width="3" />
+
+        ${mechPosters.map(p => `
+          <g class="car-node-spot cursor-pointer" onclick="openPosterFromCar('${p.code}')">
+            <line x1="${p.carCoords.x}" y1="${p.carCoords.y}" x2="${p.carCoords.x}" y2="${p.carCoords.y - 38}" stroke="#F59E0B" stroke-width="2" />
+            <circle cx="${p.carCoords.x}" cy="${p.carCoords.y}" r="7" fill="#F59E0B" stroke="#FFFFFF" stroke-width="2" />
+            <rect x="${p.carCoords.x - 52}" y="${p.carCoords.y - 62}" width="104" height="24" rx="5" fill="#F59E0B" stroke="#FFFFFF" stroke-width="1.5" />
+            <text x="${p.carCoords.x}" y="${p.carCoords.y - 46}" fill="#000000" font-size="10" font-weight="bold" font-family="monospace" text-anchor="middle">${p.carCoords.label}</text>
+          </g>
+        `).join("")}
+      `;
+    }
+
+    function openPosterFromCar(code) {
+      const found = AVTOALL_POSTERS.find(p => p.code === code);
+      if (found) {
+        currentPoster = found;
+        selectedPos = null;
+        setViewMode("poster");
+      }
+    }
+
+    /* =========================================================================
+       5. ГЕНЕРАТОР СБОРОЧНЫХ ВЗРЫВ-СХЕМ УЗЛОВ (ВКЛЮЧАЯ ПЛАКАТ А400 ТОПЛИВНАЯ СИСТЕМА И ВПУСК)
+       ========================================================================= */
+    function drawPosterExplodedView(poster, parts) {
+      const svg = document.getElementById("mainTechnicalSvg");
+      let artwork = "";
+
+      if (poster.code === "А400") {
+        // ПЛАКАТ А400: ТОПЛИВНАЯ СИСТЕМА, ЭЛЕКТРОБЕНЗОНАСОС, РАМПА, ФОРСУНКИ, ДРОССЕЛЬ Е-ГАЗ И РЕСИВЕР В РАЗБОРЕ
+        artwork = `
+          <!-- Оси подачи топлива высокого давления (3.8–4.0 бар) и воздушного тракта впуска -->
+          <path d="M 130 220 L 130 185 L 235 185 L 235 340 L 295 310" fill="none" class="svg-axis" stroke="#EF4444" stroke-width="2.5" stroke-dasharray="10 4" />
+          <line x1="425" y1="165" x2="425" y2="305" class="svg-axis" stroke="#F59E0B" stroke-width="1.8" stroke-dasharray="8 4" />
+          <line x1="460" y1="125" x2="590" y2="195" class="svg-axis" stroke="#38BDF8" stroke-width="2" stroke-dasharray="10 4" />
+
+          <!-- Поз 1: Погружной модуль электробензонасоса (ЭБН) со стаканом, сеткой, РДТ и поплавком ДУТ -->
+          <rect x="82" y="215" width="96" height="22" rx="5" fill="#334155" stroke="#FFFFFF" stroke-width="2" />
+          <rect x="95" y="237" width="70" height="125" rx="8" class="svg-part-body" fill="#162032" stroke="#38BDF8" stroke-width="3" />
+          <rect x="112" y="255" width="36" height="75" rx="4" fill="#090D16" stroke="#F59E0B" stroke-width="2" />
+          <!-- Сетка-фильтр бензоприемника и рычаг с поплавком ДУТ -->
+          <rect x="102" y="340" width="56" height="16" rx="4" fill="#F59E0B" />
+          <line x1="165" y1="275" x2="205" y2="315" stroke="#CBD5E1" stroke-width="3" />
+          <rect x="198" y="308" width="22" height="16" rx="4" fill="#EF4444" stroke="#FFFFFF" stroke-width="1.5" />
+          <text x="130" y="295" fill="#38BDF8" font-size="9" font-weight="bold" font-family="monospace" text-anchor="middle">ЭБН 4.0 БАР</text>
+
+          <!-- Поз 6: Фильтр тонкой очистки топлива магистральный (под быстросъемные клипсы) -->
+          <rect x="195" y="345" width="80" height="42" rx="8" class="svg-part-accent" fill="#1E293B" stroke="#10B981" stroke-width="3" />
+          <line x1="180" y1="366" x2="195" y2="366" stroke="#CBD5E1" stroke-width="5" />
+          <line x1="275" y1="366" x2="290" y2="366" stroke="#CBD5E1" stroke-width="5" />
+          <text x="235" y="370" fill="#10B981" font-size="9" font-weight="bold" font-family="monospace" text-anchor="middle">ФИЛЬТР</text>
+
+          <!-- Поз 5: Впускной ресивер (коллектор с 4 раннерами) -->
+          <rect x="265" y="80" width="185" height="68" rx="16" class="svg-part-body" fill="#162238" stroke="#38BDF8" stroke-width="3.5" />
+          <!-- 4 впускных раннера ресивера -->
+          <rect x="285" y="148" width="24" height="32" rx="3" fill="#1E293B" stroke="#64748B" stroke-width="2" />
+          <rect x="328" y="148" width="24" height="32" rx="3" fill="#1E293B" stroke="#64748B" stroke-width="2" />
+          <rect x="371" y="148" width="24" height="32" rx="3" fill="#1E293B" stroke="#64748B" stroke-width="2" />
+          <rect x="414" y="148" width="24" height="32" rx="3" fill="#1E293B" stroke="#64748B" stroke-width="2" />
+          <text x="357" y="118" fill="#38BDF8" font-size="11" font-weight="bold" font-family="monospace" text-anchor="middle">ВПУСКНОЙ РЕСИВЕР</text>
+
+          <!-- Поз 4: Электронный дроссельный патрубок (Е-Газ с заслонкой и сервоприводом) -->
+          <rect x="465" y="92" width="64" height="64" rx="10" class="svg-part-accent" fill="#1E293B" stroke="#F59E0B" stroke-width="3" />
+          <circle cx="497" cy="124" r="22" fill="#090D16" stroke="#06B6D4" stroke-width="2.5" />
+          <line x1="480" y1="112" x2="514" y2="136" stroke="#F59E0B" stroke-width="3.5" />
+          <text x="497" y="84" fill="#F59E0B" font-size="9" font-weight="bold" font-family="monospace" text-anchor="middle">Е-ГАЗ</text>
+
+          <!-- Поз 3: Четыре электромагнитные топливные форсунки с уплотнительными кольцами ФКМ (в разборе) -->
+          <g>
+            <!-- Форсунка 1 -->
+            <rect x="289" y="210" width="16" height="52" rx="3" fill="#064E3B" stroke="#10B981" stroke-width="2" />
+            <circle cx="297" cy="208" r="6" fill="#F59E0B" />
+            <circle cx="297" cy="264" r="6" fill="#F59E0B" />
+            <!-- Форсунка 2 -->
+            <rect x="332" y="210" width="16" height="52" rx="3" fill="#064E3B" stroke="#10B981" stroke-width="2" />
+            <circle cx="340" cy="208" r="6" fill="#F59E0B" />
+            <circle cx="340" cy="264" r="6" fill="#F59E0B" />
+            <!-- Форсунка 3 -->
+            <rect x="375" y="210" width="16" height="52" rx="3" fill="#064E3B" stroke="#10B981" stroke-width="2" />
+            <circle cx="383" cy="208" r="6" fill="#F59E0B" />
+            <circle cx="383" cy="264" r="6" fill="#F59E0B" />
+            <!-- Форсунка 4 (подписанная) -->
+            <rect x="418" y="210" width="16" height="52" rx="3" fill="#064E3B" stroke="#10B981" stroke-width="2.5" />
+            <circle cx="426" cy="208" r="6" fill="#F59E0B" />
+            <circle cx="426" cy="264" r="6" fill="#F59E0B" />
+          </g>
+
+          <!-- Поз 2: Топливная рампа (коллектор высокого давления со штуцером проверки давления) -->
+          <rect x="270" y="295" width="190" height="28" rx="6" class="svg-part-accent" fill="#1E293B" stroke="#EF4444" stroke-width="3" />
+          <circle cx="297" cy="295" r="7" fill="#090D16" stroke="#CBD5E1" stroke-width="2" />
+          <circle cx="340" cy="295" r="7" fill="#090D16" stroke="#CBD5E1" stroke-width="2" />
+          <circle cx="383" cy="295" r="7" fill="#090D16" stroke="#CBD5E1" stroke-width="2" />
+          <circle cx="426" cy="295" r="7" fill="#090D16" stroke="#CBD5E1" stroke-width="2" />
+          <!-- Штуцер замера давления на торце рампы -->
+          <rect x="460" y="302" width="16" height="14" rx="2" fill="#F59E0B" />
+          <text x="365" y="313" fill="#FFFFFF" font-size="9" font-weight="bold" font-family="monospace" text-anchor="middle">ТОПЛИВНАЯ РАМПА</text>
+
+          <!-- Поз 7: Корпус воздушного фильтра со сменным картриджем и гофрированным воздуховодом -->
+          <rect x="535" y="175" width="105" height="125" rx="10" class="svg-part-body" fill="#0F172A" stroke="#94A3B8" stroke-width="3" />
+          <rect x="550" y="192" width="75" height="90" rx="4" fill="#1E293B" stroke="#F59E0B" stroke-width="2" />
+          <line x1="555" y1="210" x2="620" y2="210" stroke="#F59E0B" stroke-width="2" />
+          <line x1="555" y1="228" x2="620" y2="228" stroke="#F59E0B" stroke-width="2" />
+          <line x1="555" y1="246" x2="620" y2="246" stroke="#F59E0B" stroke-width="2" />
+          <line x1="555" y1="264" x2="620" y2="264" stroke="#F59E0B" stroke-width="2" />
+          <text x="587" y="166" fill="#CBD5E1" font-size="9" font-weight="bold" font-family="monospace" text-anchor="middle">ВОЗД. ФИЛЬТР</text>
+        `;
+      } else if (poster.code === "А300") {
+        // ПЛАКАТ А300: СИСТЕМА ОХЛАЖДЕНИЯ ДВИГАТЕЛЯ И РАДИАТОР ОТОПИТЕЛЯ САЛОНА (ПЕЧКА)
+        artwork = `
+          <path d="M 185 160 L 310 120 M 185 320 L 325 285 M 380 120 L 505 115 M 380 135 L 505 295" fill="none" class="svg-axis" stroke="#06B6D4" stroke-width="2" stroke-dasharray="10 4" />
+          <line x1="270" y1="245" x2="430" y2="245" class="svg-axis" stroke="#F59E0B" stroke-width="1.8" stroke-dasharray="10 4" />
+          <rect x="75" y="140" width="110" height="195" rx="8" class="svg-part-body" fill="#0F172A" stroke="#38BDF8" stroke-width="3.5" />
+          <rect x="92" y="152" width="76" height="170" fill="#162032" stroke="#64748B" stroke-width="1.5" />
+          <line x1="92" y1="175" x2="168" y2="175" stroke="#38BDF8" stroke-width="1.5" />
+          <line x1="92" y1="200" x2="168" y2="200" stroke="#38BDF8" stroke-width="1.5" />
+          <line x1="92" y1="225" x2="168" y2="225" stroke="#38BDF8" stroke-width="1.5" />
+          <line x1="92" y1="250" x2="168" y2="250" stroke="#38BDF8" stroke-width="1.5" />
+          <line x1="92" y1="275" x2="168" y2="275" stroke="#38BDF8" stroke-width="1.5" />
+          <line x1="92" y1="300" x2="168" y2="300" stroke="#38BDF8" stroke-width="1.5" />
+          <rect x="185" y="155" width="18" height="14" rx="2" fill="#38BDF8" />
+          <rect x="185" y="305" width="18" height="14" rx="2" fill="#38BDF8" />
+          <rect x="198" y="172" width="54" height="140" rx="8" class="svg-part-accent" fill="#1E293B" stroke="#94A3B8" stroke-width="2.5" />
+          <circle cx="225" cy="242" r="44" fill="#090D16" stroke="#06B6D4" stroke-width="2.5" />
+          <circle cx="225" cy="242" r="14" fill="#F59E0B" />
+          <line x1="225" y1="198" x2="225" y2="286" stroke="#CBD5E1" stroke-width="4" />
+          <line x1="185" y1="242" x2="265" y2="242" stroke="#CBD5E1" stroke-width="4" />
+          <rect x="305" y="90" width="80" height="62" rx="12" class="svg-part-accent" fill="#1E293B" stroke="#F59E0B" stroke-width="3" />
+          <circle cx="345" cy="121" r="18" fill="#090D16" stroke="#10B981" stroke-width="2.5" />
+          <rect x="285" y="112" width="20" height="16" rx="3" fill="#F59E0B" />
+          <rect x="385" y="108" width="20" height="14" rx="3" fill="#F59E0B" />
+          <text x="345" y="125" fill="#FFFFFF" font-size="9" font-weight="bold" font-family="monospace" text-anchor="middle">85°C</text>
+          <circle cx="355" cy="245" r="46" class="svg-part-body" fill="#162032" stroke="#06B6D4" stroke-width="3.5" />
+          <circle cx="355" cy="245" r="28" fill="#090D16" stroke="#F59E0B" stroke-width="3" stroke-dasharray="6 3" />
+          <circle cx="355" cy="245" r="10" fill="#F59E0B" />
+          <text x="355" y="210" fill="#06B6D4" font-size="9" font-weight="bold" font-family="monospace" text-anchor="middle">ПОМПА</text>
+          <path d="M 385 275 L 475 295 L 475 315 L 380 292 Z" fill="#334155" stroke="#10B981" stroke-width="2.5" />
+          <path d="M 210 162 C 250 162, 265 125, 290 120" fill="none" stroke="#EF4444" stroke-width="7" stroke-linecap="round" />
+          <path d="M 210 312 C 260 312, 295 295, 325 275" fill="none" stroke="#0EA5E9" stroke-width="7" stroke-linecap="round" />
+          <rect x="495" y="75" width="105" height="82" rx="16" class="svg-part-body" fill="#162238" stroke="#38BDF8" stroke-width="3" />
+          <rect x="530" y="55" width="36" height="20" rx="4" fill="#F59E0B" stroke="#FFFFFF" stroke-width="2" />
+          <line x1="510" y1="125" x2="585" y2="125" stroke="#EF4444" stroke-width="2" stroke-dasharray="5 3" />
+          <text x="547" y="115" fill="#38BDF8" font-size="10" font-weight="bold" font-family="monospace" text-anchor="middle">ANTIFREEZE</text>
+          <text x="547" y="142" fill="#94A3B8" font-size="8" font-family="monospace" text-anchor="middle">G12+ MAX / MIN</text>
+          <rect x="495" y="255" width="110" height="105" rx="8" class="svg-part-accent" fill="#1E293B" stroke="#F59E0B" stroke-width="3" />
+          <rect x="510" y="270" width="80" height="75" fill="#090D16" stroke="#64748B" stroke-width="1.5" />
+          <line x1="510" y1="288" x2="590" y2="288" stroke="#F59E0B" stroke-width="1.5" />
+          <line x1="510" y1="308" x2="590" y2="308" stroke="#F59E0B" stroke-width="1.5" />
+          <line x1="510" y1="328" x2="590" y2="328" stroke="#F59E0B" stroke-width="1.5" />
+          <path d="M 465 275 L 495 275 M 465 305 L 495 305" stroke="#CBD5E1" stroke-width="6" stroke-linecap="round" />
+          <text x="550" y="248" fill="#F59E0B" font-size="9" font-weight="bold" font-family="monospace" text-anchor="middle">ОТОПИТЕЛЬ (ПЕЧКА)</text>
+        `;
+      } else if (poster.code === "Д200") {
+        // ПЛАКАТ Д200: КОРОБКА ПЕРЕДАЧ В РАЗБОРЕ
+        artwork = `
+          <line x1="60" y1="145" x2="620" y2="145" class="svg-axis" stroke="#06B6D4" stroke-width="1.8" stroke-dasharray="12 4 2 4" />
+          <line x1="60" y1="255" x2="620" y2="255" class="svg-axis" stroke="#F59E0B" stroke-width="2" stroke-dasharray="12 4 2 4" />
+          <line x1="60" y1="365" x2="360" y2="365" class="svg-axis" stroke="#10B981" stroke-width="1.5" stroke-dasharray="10 4" />
+          <line x1="220" y1="75" x2="520" y2="75" stroke="#94A3B8" stroke-width="6" stroke-linecap="round" />
+          <line x1="240" y1="90" x2="500" y2="90" stroke="#64748B" stroke-width="5" stroke-linecap="round" />
+          <path d="M 325 75 L 325 110 L 310 125 M 325 110 L 340 125" fill="none" stroke="#10B981" stroke-width="5" stroke-linecap="round" />
+          <path d="M 420 90 L 420 115 L 405 130 M 420 115 L 435 130" fill="none" stroke="#10B981" stroke-width="5" stroke-linecap="round" />
+          <rect x="95" y="137" width="85" height="16" fill="#94A3B8" stroke="#FFFFFF" stroke-width="1.5" />
+          <line x1="105" y1="137" x2="105" y2="153" stroke="#090D16" stroke-width="2" />
+          <line x1="115" y1="137" x2="115" y2="153" stroke="#090D16" stroke-width="2" />
+          <line x1="125" y1="137" x2="125" y2="153" stroke="#090D16" stroke-width="2" />
+          <rect x="180" y="118" width="22" height="54" rx="3" fill="#334155" stroke="#06B6D4" stroke-width="2.5" />
+          <rect x="210" y="133" width="300" height="24" fill="#1E293B" stroke="#06B6D4" stroke-width="2.5" />
+          <rect x="245" y="115" width="26" height="60" rx="3" class="svg-part-accent" fill="#162032" stroke="#38BDF8" stroke-width="2.5" />
+          <rect x="305" y="110" width="28" height="70" rx="3" class="svg-part-accent" fill="#162032" stroke="#38BDF8" stroke-width="2.5" />
+          <rect x="415" y="106" width="28" height="78" rx="3" class="svg-part-accent" fill="#162032" stroke="#38BDF8" stroke-width="2.5" />
+          <rect x="485" y="118" width="24" height="54" rx="3" fill="#334155" stroke="#06B6D4" stroke-width="2.5" />
+          <rect x="145" y="215" width="34" height="80" rx="4" fill="#0F172A" stroke="#F59E0B" stroke-width="3" />
+          <rect x="180" y="242" width="360" height="26" fill="#1E293B" stroke="#94A3B8" stroke-width="2.5" />
+          <rect x="235" y="205" width="32" height="100" rx="4" class="svg-part-body" fill="#162032" stroke="#CBD5E1" stroke-width="2.5" />
+          <rect x="285" y="212" width="30" height="86" rx="4" class="svg-part-body" fill="#162032" stroke="#CBD5E1" stroke-width="2.5" />
+          <rect x="455" y="218" width="30" height="74" rx="4" class="svg-part-body" fill="#162032" stroke="#CBD5E1" stroke-width="2.5" />
+          <rect x="505" y="222" width="28" height="66" rx="4" class="svg-part-body" fill="#162032" stroke="#CBD5E1" stroke-width="2.5" />
+          <rect x="330" y="210" width="42" height="90" rx="5" fill="#064E3B" stroke="#10B981" stroke-width="3" />
+          <line x1="351" y1="210" x2="351" y2="300" stroke="#FFFFFF" stroke-width="2.5" />
+          <polygon points="382,220 398,226 398,284 382,290" fill="#F59E0B" stroke="#FFFFFF" stroke-width="1.5" />
+          <polygon points="415,226 431,220 431,290 415,284" fill="#F59E0B" stroke="#FFFFFF" stroke-width="1.5" />
+          <rect x="115" y="315" width="26" height="100" rx="4" fill="#1E293B" stroke="#F59E0B" stroke-width="3" />
+          <circle cx="175" cy="365" r="42" class="svg-part-body" fill="#162032" stroke="#06B6D4" stroke-width="3.5" />
+          <circle cx="175" cy="365" r="20" fill="#090D16" stroke="#10B981" stroke-width="2.5" />
+          <line x1="175" y1="335" x2="175" y2="395" stroke="#CBD5E1" stroke-width="3" />
+        `;
+      } else if (poster.code === "Д250") {
+        // ПЛАКАТ Д250: РАЗДАТОЧНАЯ КОРОБКА НИВЫ 4x4 В РАЗБОРЕ
+        artwork = `
+          <line x1="90" y1="115" x2="580" y2="115" class="svg-axis" stroke="#06B6D4" stroke-width="1.5" stroke-dasharray="10 4" />
+          <line x1="70" y1="230" x2="620" y2="230" class="svg-axis" stroke="#F59E0B" stroke-width="2" stroke-dasharray="12 4 2 4" />
+          <line x1="70" y1="345" x2="620" y2="345" class="svg-axis" stroke="#10B981" stroke-width="1.8" stroke-dasharray="10 4" />
+          <rect x="185" y="75" width="320" height="225" rx="16" class="svg-part-body" fill="#0F172A" fill-opacity="0.85" stroke="#475569" stroke-width="3" stroke-dasharray="8 4" />
+          <rect x="275" y="95" width="140" height="40" rx="6" fill="#1E293B" stroke="#38BDF8" stroke-width="2.5" />
+          <rect x="220" y="195" width="52" height="70" rx="6" fill="#064E3B" stroke="#10B981" stroke-width="3" />
+          <line x1="246" y1="195" x2="246" y2="265" stroke="#FFFFFF" stroke-width="2.5" />
+          <circle cx="345" cy="230" r="56" class="svg-part-accent" fill="#162032" stroke="#F59E0B" stroke-width="4" />
+          <circle cx="345" cy="230" r="32" fill="#090D16" stroke="#06B6D4" stroke-width="2.5" />
+          <line x1="345" y1="190" x2="345" y2="270" stroke="#F59E0B" stroke-width="4" />
+          <line x1="305" y1="230" x2="385" y2="230" stroke="#F59E0B" stroke-width="4" />
+          <circle cx="345" cy="230" r="9" fill="#FFFFFF" />
+          <rect x="425" y="180" width="42" height="100" rx="5" class="svg-part-body" fill="#1E293B" stroke="#06B6D4" stroke-width="3" />
+          <rect x="472" y="195" width="28" height="70" rx="4" fill="#334155" stroke="#CBD5E1" stroke-width="2" />
+          <rect x="95" y="325" width="150" height="40" rx="6" class="svg-part-accent" fill="#1E293B" stroke="#38BDF8" stroke-width="3" />
+          <circle cx="120" cy="345" r="14" fill="#090D16" stroke="#F59E0B" stroke-width="2.5" />
+          <circle cx="220" cy="345" r="14" fill="#090D16" stroke="#F59E0B" stroke-width="2.5" />
+          <rect x="465" y="315" width="45" height="60" rx="6" fill="#334155" stroke="#10B981" stroke-width="3" />
+          <circle cx="545" cy="345" r="24" fill="#090D16" stroke="#F59E0B" stroke-width="4" />
+        `;
+      } else if (poster.code === "Е100") {
+        artwork = `
+          <line x1="50" y1="230" x2="650" y2="230" class="svg-axis" stroke="#10B981" stroke-width="2" stroke-dasharray="12 4 2 4" />
+          <ellipse cx="105" cy="230" rx="18" ry="52" class="svg-part-accent" fill="#334155" stroke="#CBD5E1" stroke-width="3" />
+          <ellipse cx="145" cy="230" rx="12" ry="36" fill="#090D16" stroke="#06B6D4" stroke-width="3" />
+          <ellipse cx="195" cy="230" rx="28" ry="95" class="svg-part-body" fill="#162032" stroke="#94A3B8" stroke-width="3.5" />
+          <rect x="235" y="165" width="75" height="130" rx="14" class="svg-part-accent" fill="#1E293B" stroke="#F59E0B" stroke-width="3" />
+          <line x1="250" y1="175" x2="250" y2="285" stroke="#F59E0B" stroke-width="4" />
+          <line x1="272" y1="175" x2="272" y2="285" stroke="#F59E0B" stroke-width="4" />
+          <line x1="294" y1="175" x2="294" y2="285" stroke="#F59E0B" stroke-width="4" />
+          <rect x="310" y="218" width="45" height="24" fill="#D97706" stroke="#FFFFFF" stroke-width="1.5" />
+          <ellipse cx="375" cy="230" rx="26" ry="102" class="svg-part-body" fill="#0F172A" stroke="#06B6D4" stroke-width="4" />
+          <ellipse cx="375" cy="230" rx="16" ry="78" fill="none" stroke="#F59E0B" stroke-width="5" stroke-dasharray="6 4" />
+          <path d="M 455 155 A 80 80 0 1 1 455 305 L 440 280 A 52 52 0 1 0 440 180 Z" class="svg-part-accent" fill="#1E293B" stroke="#10B981" stroke-width="3" />
+          <circle cx="482" cy="195" r="6" fill="#EF4444" />
+          <circle cx="492" cy="230" r="6" fill="#EF4444" />
+          <circle cx="482" cy="265" r="6" fill="#EF4444" />
+          <rect x="505" y="145" width="54" height="52" rx="6" fill="#064E3B" stroke="#10B981" stroke-width="2.5" />
+          <circle cx="525" cy="168" r="12" fill="#090D16" stroke="#F59E0B" stroke-width="2" />
+          <rect x="492" y="175" width="14" height="10" fill="#F59E0B" />
+          <path d="M 565 140 C 610 140, 610 320, 565 320 Z" class="svg-part-body" fill="#111827" stroke="#64748B" stroke-width="3" />
+        `;
+      } else if (poster.code === "Е150") {
+        artwork = `
+          <line x1="50" y1="270" x2="650" y2="270" class="svg-axis" stroke="#06B6D4" stroke-width="2" stroke-dasharray="12 4 2 4" />
+          <line x1="160" y1="125" x2="360" y2="125" class="svg-axis" stroke="#F59E0B" stroke-width="1.5" stroke-dasharray="8 4" />
+          <rect x="200" y="95" width="115" height="58" rx="10" class="svg-part-accent" fill="#1E293B" stroke="#F59E0B" stroke-width="3" />
+          <rect x="165" y="112" width="35" height="24" rx="4" fill="#94A3B8" stroke="#FFFFFF" stroke-width="1.5" />
+          <circle cx="322" cy="112" r="6" fill="#EF4444" />
+          <circle cx="322" cy="136" r="6" fill="#EF4444" />
+          <path d="M 85 210 L 145 180 L 155 335 L 85 320 Z" class="svg-part-body" fill="#162032" stroke="#94A3B8" stroke-width="3" />
+          <path d="M 145 130 L 165 200 L 165 255" fill="none" stroke="#10B981" stroke-width="6" stroke-linecap="round" />
+          <rect x="155" y="242" width="52" height="56" rx="6" class="svg-part-accent" fill="#334155" stroke="#06B6D4" stroke-width="3" />
+          <rect x="135" y="252" width="20" height="36" fill="#F59E0B" stroke="#FFFFFF" stroke-width="1.5" />
+          <ellipse cx="245" cy="270" rx="16" ry="52" fill="#1E293B" stroke="#CBD5E1" stroke-width="2.5" />
+          <rect x="275" y="220" width="105" height="100" rx="12" class="svg-part-accent" fill="#1E293B" stroke="#F59E0B" stroke-width="3" />
+          <rect x="380" y="242" width="32" height="56" fill="#D97706" stroke="#FFFFFF" stroke-width="1.5" />
+          <rect x="425" y="210" width="85" height="120" rx="8" class="svg-part-body" fill="#0F172A" stroke="#38BDF8" stroke-width="3.5" />
+          <ellipse cx="535" cy="270" rx="18" ry="56" class="svg-part-accent" fill="#064E3B" stroke="#10B981" stroke-width="3" />
+          <rect x="528" y="230" width="14" height="16" fill="#F59E0B" />
+          <rect x="528" y="294" width="14" height="16" fill="#F59E0B" />
+          <path d="M 565 215 L 595 225 L 595 315 L 565 325 Z" class="svg-part-body" fill="#162032" stroke="#64748B" stroke-width="2.5" />
+        `;
+      } else if (poster.code === "Е200") {
+        artwork = `
+          <path d="M 225 135 L 350 220 M 405 135 L 350 220 M 495 135 L 350 220 M 155 290 L 350 220 M 280 290 L 350 220 M 425 290 L 350 220 M 555 290 L 350 220" stroke="#10B981" stroke-width="1.8" stroke-dasharray="6 4" />
+          <rect x="285" y="202" width="130" height="34" rx="6" fill="#064E3B" stroke="#10B981" stroke-width="2" />
+          <text x="350" y="223" fill="#FFFFFF" font-size="10" font-weight="bold" font-family="monospace" text-anchor="middle">ЖГУТ ЭСУД / CAN</text>
+          <rect x="85" y="85" width="140" height="95" rx="8" class="svg-part-body" fill="#162032" stroke="#38BDF8" stroke-width="3" />
+          <rect x="100" y="165" width="50" height="22" rx="3" fill="#090D16" stroke="#F59E0B" stroke-width="2" />
+          <rect x="160" y="165" width="50" height="22" rx="3" fill="#090D16" stroke="#F59E0B" stroke-width="2" />
+          <text x="155" y="128" fill="#38BDF8" font-size="12" font-weight="bold" font-family="monospace" text-anchor="middle">ЭБУ ИТЭЛМА</text>
+          <text x="155" y="145" fill="#94A3B8" font-size="9" font-family="monospace" text-anchor="middle">М74.9 / М86 / Е-ГАЗ</text>
+          <rect x="315" y="80" width="70" height="32" rx="6" class="svg-part-accent" fill="#1E293B" stroke="#F59E0B" stroke-width="2.5" />
+          <rect x="338" y="112" width="24" height="75" rx="4" fill="#0F172A" stroke="#06B6D4" stroke-width="2.5" />
+          <rect x="465" y="85" width="120" height="78" rx="8" class="svg-part-body" fill="#162032" stroke="#06B6D4" stroke-width="3" />
+          <circle cx="525" cy="124" r="24" fill="#090D16" stroke="#10B981" stroke-width="2.5" />
+          <text x="525" y="128" fill="#10B981" font-size="9" font-weight="bold" font-family="monospace" text-anchor="middle">ДАД/ДМРВ</text>
+          <rect x="125" y="280" width="60" height="65" rx="8" class="svg-part-accent" fill="#1E293B" stroke="#F59E0B" stroke-width="2.5" />
+          <circle cx="155" cy="325" r="12" fill="#090D16" stroke="#FFFFFF" stroke-width="2" />
+          <text x="155" y="302" fill="#F59E0B" font-size="10" font-weight="bold" font-family="monospace" text-anchor="middle">ДПКВ</text>
+          <rect x="250" y="280" width="60" height="65" rx="8" class="svg-part-accent" fill="#1E293B" stroke="#06B6D4" stroke-width="2.5" />
+          <circle cx="280" cy="325" r="12" fill="#090D16" stroke="#FFFFFF" stroke-width="2" />
+          <text x="280" y="302" fill="#06B6D4" font-size="10" font-weight="bold" font-family="monospace" text-anchor="middle">ДПРВ</text>
+          <rect x="390" y="280" width="75" height="65" rx="8" class="svg-part-body" fill="#162032" stroke="#10B981" stroke-width="2.5" />
+          <rect x="415" y="315" width="24" height="22" rx="3" fill="#94A3B8" />
+          <text x="427" y="302" fill="#10B981" font-size="10" font-weight="bold" font-family="monospace" text-anchor="middle">ЛЯМБДА</text>
+          <rect x="520" y="280" width="75" height="65" rx="8" class="svg-part-accent" fill="#1E293B" stroke="#F59E0B" stroke-width="2.5" />
+          <polygon points="545,320 570,320 565,338 550,338" fill="#D97706" />
+          <text x="557" y="302" fill="#F59E0B" font-size="10" font-weight="bold" font-family="monospace" text-anchor="middle">ДТОЖ/ДД</text>
+        `;
+      } else if (poster.code === "Б100") {
+        artwork = `
+          <line x1="340" y1="45" x2="340" y2="260" class="svg-axis" stroke="#06B6D4" stroke-width="1.5" stroke-dasharray="10 4" />
+          <line x1="160" y1="360" x2="480" y2="210" class="svg-axis" stroke="#EF4444" stroke-width="1.5" stroke-dasharray="10 4" />
+          <path d="M 190 95 L 340 50 L 495 85 L 385 155 L 210 135 Z" class="svg-part-body" fill="#162238" stroke="#38BDF8" stroke-width="3" />
+          <path d="M 245 100 L 340 72 M 310 120 L 420 85" stroke="#64748B" stroke-width="2" />
+          <rect x="415" y="65" width="32" height="18" rx="3" fill="#F59E0B" stroke="#FFFFFF" stroke-width="1.5" />
+          <rect x="285" y="55" width="28" height="16" rx="3" fill="#F59E0B" />
+          <path d="M 425 185 L 575 155 L 590 250 L 545 265 A 45 45 0 0 0 455 265 L 420 255 Z" class="svg-part-accent" fill="#1E293B" stroke="#06B6D4" stroke-width="3" />
+          <polygon points="180,245 310,235 300,285 190,295" fill="#090D16" stroke="#F59E0B" stroke-width="2.5" />
+          <line x1="190" y1="260" x2="302" y2="252" stroke="#64748B" stroke-width="2" />
+          <line x1="192" y1="275" x2="298" y2="268" stroke="#64748B" stroke-width="2" />
+          <path d="M 120 310 L 350 295 L 390 345 L 365 395 L 135 405 L 105 360 Z" class="svg-part-body" fill="#1E293B" stroke="#F59E0B" stroke-width="3" />
+          <rect x="175" y="345" width="125" height="32" rx="5" fill="#090D16" stroke="#64748B" stroke-width="2" />
+          <circle cx="145" cy="355" r="14" fill="#090D16" stroke="#06B6D4" stroke-width="2" />
+          <circle cx="335" cy="345" r="14" fill="#090D16" stroke="#06B6D4" stroke-width="2" />
+          <path d="M 285 365 L 455 345 L 460 375 L 290 395 Z" fill="#334155" stroke="#CBD5E1" stroke-width="2.5" />
+        `;
+      } else if (poster.code === "Б200") {
+        artwork = `
+          <line x1="350" y1="35" x2="350" y2="380" class="svg-axis" stroke="#06B6D4" stroke-width="1.5" stroke-dasharray="10 4" />
+          <path d="M 245 145 L 315 65 L 455 65 L 455 155 L 245 155 Z" fill="#0EA5E9" fill-opacity="0.25" stroke="#38BDF8" stroke-width="3" />
+          <path d="M 145 140 L 205 130 L 215 175 L 155 180 Z" class="svg-part-accent" fill="#1E293B" stroke="#06B6D4" stroke-width="3" />
+          <polygon points="205,130 232,145 215,175" fill="#334155" stroke="#CBD5E1" stroke-width="2" />
+          <path d="M 215 210 L 295 130 L 475 130 L 480 385 L 220 385 Z" class="svg-part-body" fill="#162238" stroke="#94A3B8" stroke-width="3.5" />
+          <path d="M 235 210 L 298 145 L 458 145 L 458 220 Z" fill="#090D16" stroke="#475569" stroke-width="2" />
+          <rect x="255" y="255" width="90" height="85" rx="8" fill="#090D16" stroke="#334155" stroke-width="2" />
+          <rect x="365" y="265" width="80" height="75" rx="8" fill="#090D16" stroke="#334155" stroke-width="2" />
+          <rect x="395" y="235" width="58" height="18" rx="6" fill="#F59E0B" stroke="#FFFFFF" stroke-width="2" />
+          <rect x="445" y="285" width="38" height="48" rx="5" fill="#10B981" stroke="#FFFFFF" stroke-width="2" />
+          <line x1="530" y1="150" x2="530" y2="340" stroke="#F59E0B" stroke-width="8" stroke-linecap="round" />
+          <rect x="510" y="220" width="42" height="28" rx="4" fill="#06B6D4" stroke="#FFFFFF" stroke-width="2" />
+          <circle cx="555" cy="275" r="20" fill="#1E293B" stroke="#F59E0B" stroke-width="3" />
+        `;
+      } else if (poster.code === "Б300") {
+        artwork = `
+          <line x1="350" y1="40" x2="350" y2="410" class="svg-axis" stroke="#06B6D4" stroke-width="1.5" stroke-dasharray="10 4" />
+          <path d="M 225 70 L 475 70 L 505 155 L 195 155 Z" class="svg-part-body" fill="#162238" stroke="#38BDF8" stroke-width="3" />
+          <rect x="295" y="115" width="110" height="24" rx="4" fill="#090D16" stroke="#64748B" stroke-width="2" />
+          <line x1="215" y1="95" x2="265" y2="185" stroke="#10B981" stroke-width="6" stroke-linecap="round" />
+          <line x1="485" y1="95" x2="435" y2="185" stroke="#10B981" stroke-width="6" stroke-linecap="round" />
+          <path d="M 105 170 L 235 160 L 250 285 L 205 295 A 45 45 0 0 0 120 295 L 95 280 Z" class="svg-part-accent" fill="#1E293B" stroke="#94A3B8" stroke-width="3" />
+          <rect x="330" y="235" width="42" height="34" rx="5" fill="#F59E0B" stroke="#FFFFFF" stroke-width="2" />
+          <rect x="220" y="295" width="260" height="26" rx="4" fill="#334155" stroke="#CBD5E1" stroke-width="2" />
+          <path d="M 175 335 L 525 335 L 545 395 L 155 395 Z" class="svg-part-body" fill="#1E293B" stroke="#F59E0B" stroke-width="3" />
+          <rect x="235" y="370" width="230" height="18" rx="4" fill="#090D16" stroke="#06B6D4" stroke-width="2" />
+        `;
+      } else if (poster.code === "Е300") {
+        artwork = `
+          <line x1="340" y1="30" x2="340" y2="430" class="svg-axis" stroke="#334155" stroke-width="1.5" stroke-dasharray="10 4" />
+          <path d="M 110 100 L 275 90 L 295 160 L 130 165 Z" class="svg-part-body" fill="#162238" stroke="#38BDF8" stroke-width="3" />
+          <circle cx="175" cy="128" r="22" fill="#090D16" stroke="#06B6D4" stroke-width="3" />
+          <circle cx="235" cy="125" r="18" fill="#090D16" stroke="#F59E0B" stroke-width="2.5" />
+          <path d="M 125 150 L 275 145" stroke="#38BDF8" stroke-width="4" stroke-linecap="round" />
+          <path d="M 570 100 L 405 90 L 385 160 L 550 165 Z" class="svg-part-body" fill="#162238" stroke="#38BDF8" stroke-width="3" />
+          <circle cx="505" cy="128" r="22" fill="#090D16" stroke="#06B6D4" stroke-width="3" />
+          <circle cx="445" cy="125" r="18" fill="#090D16" stroke="#F59E0B" stroke-width="2.5" />
+          <path d="M 555 150 L 405 145" stroke="#38BDF8" stroke-width="4" stroke-linecap="round" />
+          <rect x="312" y="170" width="56" height="38" rx="6" fill="#F59E0B" stroke="#FFFFFF" stroke-width="2" />
+          <rect x="155" y="215" width="85" height="60" rx="10" fill="#1E293B" stroke="#94A3B8" stroke-width="2.5" />
+          <circle cx="197" cy="245" r="20" fill="#090D16" stroke="#F59E0B" stroke-width="3" />
+          <path d="M 140 315 L 295 320 L 280 385 L 155 380 Z" fill="#450A0A" stroke="#EF4444" stroke-width="3" />
+          <path d="M 160 340 L 270 345 M 165 360 L 265 365" stroke="#F87171" stroke-width="4" stroke-linecap="round" />
+          <path d="M 395 320 L 530 315 L 515 380 L 410 385 Z" fill="#450A0A" stroke="#EF4444" stroke-width="3" />
+          <rect x="425" y="340" width="75" height="16" rx="3" fill="#F59E0B" />
+        `;
+      } else if (poster.code === "А140") {
+        artwork = `
+          <line x1="250" y1="30" x2="250" y2="430" class="svg-axis" stroke="#1E293B" stroke-width="1.5" stroke-dasharray="10 4" />
+          <line x1="430" y1="30" x2="430" y2="430" class="svg-axis" stroke="#1E293B" stroke-width="1.5" stroke-dasharray="10 4" />
+          <rect x="155" y="65" width="370" height="330" rx="18" class="svg-part-body" fill="#0F172A" stroke="#334155" stroke-width="2.5" />
+          <circle cx="250" cy="120" r="56" class="svg-part-accent" fill="#1E293B" stroke="#06B6D4" stroke-width="4" />
+          <circle cx="250" cy="120" r="36" stroke="#06B6D4" stroke-width="1.5" stroke-dasharray="6 4" />
+          <circle cx="250" cy="120" r="14" fill="#F59E0B" />
+          <circle cx="430" cy="120" r="56" class="svg-part-accent" fill="#1E293B" stroke="#F59E0B" stroke-width="4" />
+          <circle cx="430" cy="120" r="36" stroke="#F59E0B" stroke-width="1.5" stroke-dasharray="6 4" />
+          <circle cx="430" cy="120" r="14" fill="#06B6D4" />
+          <circle cx="340" cy="120" r="20" fill="#090D16" stroke="#10B981" stroke-width="4" />
+          <circle cx="210" cy="245" r="28" class="svg-part-body" fill="#334155" stroke="#CBD5E1" stroke-width="3" />
+          <circle cx="210" cy="245" r="9" fill="#F59E0B" />
+          <circle cx="465" cy="245" r="28" class="svg-part-body" fill="#334155" stroke="#CBD5E1" stroke-width="3" />
+          <circle cx="465" cy="245" r="9" fill="#06B6D4" />
+          <circle cx="340" cy="360" r="42" class="svg-part-accent" fill="#1E293B" stroke="#06B6D4" stroke-width="4" />
+          <circle cx="340" cy="360" r="15" fill="#F59E0B" />
+          <path d="M 250 64 L 430 64 A 56 56 0 0 1 486 120 L 465 245 L 380 360 A 42 42 0 0 1 300 360 L 210 245 L 194 120 A 56 56 0 0 1 250 64 Z" fill="none" stroke="#F59E0B" stroke-width="6.5" stroke-dasharray="10 4" />
+        `;
+      } else if (poster.code === "А100") {
+        artwork = `
+          <line x1="340" y1="20" x2="340" y2="430" class="svg-axis" stroke="#EF4444" stroke-width="1.5" stroke-dasharray="12 4 2 4" />
+          <ellipse cx="340" cy="45" rx="52" ry="10" stroke="#F59E0B" stroke-width="3" />
+          <ellipse cx="340" cy="62" rx="52" ry="10" stroke="#06B6D4" stroke-width="2.5" />
+          <rect x="288" y="80" width="104" height="75" rx="8" class="svg-part-accent" fill="#1E293B" stroke="#CBD5E1" stroke-width="3" />
+          <circle cx="340" cy="120" r="16" fill="#090D16" stroke="#F59E0B" stroke-width="2.5" />
+          <rect x="195" y="135" width="75" height="22" rx="4" class="svg-part-body" fill="#334155" stroke="#06B6D4" stroke-width="2.5" />
+          <path d="M 325 170 L 355 170 L 365 270 L 390 295 L 290 295 L 315 270 Z" class="svg-part-body" fill="#1E293B" stroke="#94A3B8" stroke-width="3" />
+          <circle cx="340" cy="185" r="12" fill="#090D16" stroke="#F59E0B" stroke-width="2" />
+          <path d="M 220 300 A 30 20 0 0 1 280 300" fill="none" stroke="#F59E0B" stroke-width="6" />
+          <path d="M 220 325 A 30 20 0 0 0 280 325" fill="none" stroke="#F59E0B" stroke-width="6" />
+          <path d="M 180 360 L 260 360 L 280 330 L 320 330 L 340 385 L 390 385 L 410 340 L 450 340 L 470 360 L 520 360" fill="none" stroke="#06B6D4" stroke-width="14" stroke-linecap="round" stroke-linejoin="round" />
+        `;
+      } else if (poster.code === "Д100") {
+        artwork = `
+          <line x1="60" y1="230" x2="640" y2="230" class="svg-axis" stroke="#06B6D4" stroke-width="2" stroke-dasharray="14 5 2 5" />
+          <ellipse cx="145" cy="230" rx="28" ry="145" class="svg-part-body" fill="#111827" stroke="#64748B" stroke-width="4" />
+          <ellipse cx="135" cy="230" rx="12" ry="140" stroke="#F59E0B" stroke-width="3" stroke-dasharray="6 3" />
+          <ellipse cx="270" cy="230" rx="22" ry="120" class="svg-part-accent" fill="#1E293B" stroke="#CBD5E1" stroke-width="3" />
+          <rect x="262" y="160" width="16" height="28" rx="3" fill="#F59E0B" />
+          <rect x="262" y="272" width="16" height="28" rx="3" fill="#F59E0B" />
+          <ellipse cx="270" cy="230" rx="10" ry="26" fill="#090D16" stroke="#FFFFFF" stroke-width="2" />
+          <ellipse cx="395" cy="230" rx="26" ry="128" class="svg-part-body" fill="#162032" stroke="#06B6D4" stroke-width="4" />
+          <path d="M 395 135 L 388 205 M 395 325 L 388 255 M 380 165 L 388 215 M 380 295 L 388 245" stroke="#CBD5E1" stroke-width="3" />
+          <rect x="385" y="115" width="32" height="10" fill="#F59E0B" />
+          <ellipse cx="510" cy="230" rx="16" ry="48" class="svg-part-accent" fill="#334155" stroke="#FFFFFF" stroke-width="3" />
+          <path d="M 545 180 L 565 230 L 545 280 M 565 230 L 605 310" fill="none" stroke="#10B981" stroke-width="8" stroke-linecap="round" />
+        `;
+      } else if (poster.code === "М100") {
+        artwork = `
+          <line x1="350" y1="30" x2="350" y2="360" class="svg-axis" stroke="#06B6D4" stroke-width="2" stroke-dasharray="10 4" />
+          <rect x="290" y="45" width="120" height="32" rx="6" class="svg-part-accent" fill="#1E293B" stroke="#FFFFFF" stroke-width="2.5" />
+          <circle cx="350" cy="61" r="9" fill="#F59E0B" />
+          <line x1="350" y1="78" x2="350" y2="290" stroke="#06B6D4" stroke-width="14" stroke-linecap="round" />
+          <rect x="322" y="185" width="56" height="115" rx="6" class="svg-part-body" fill="#162032" stroke="#06B6D4" stroke-width="3" />
+          <path d="M 310 95 Q 390 110 310 125 Q 390 140 310 155 Q 390 170 310 185 Q 390 200 310 215 Q 390 230 310 245" fill="none" stroke="#F59E0B" stroke-width="6.5" stroke-linecap="round" />
+          <path d="M 160 355 L 340 345 L 430 365" fill="none" stroke="#94A3B8" stroke-width="12" stroke-linecap="round" />
+          <circle cx="160" cy="355" r="16" fill="#1E293B" stroke="#06B6D4" stroke-width="3.5" />
+          <circle cx="430" cy="365" r="18" fill="#F59E0B" stroke="#FFFFFF" stroke-width="3" />
+          <line x1="215" y1="190" x2="215" y2="345" stroke="#10B981" stroke-width="6" />
+          <circle cx="215" cy="190" r="9" fill="#10B981" stroke="#FFFFFF" stroke-width="2" />
+          <circle cx="215" cy="345" r="9" fill="#10B981" stroke="#FFFFFF" stroke-width="2" />
+        `;
+      } else if (poster.code === "К110") {
+        artwork = `
+          <line x1="80" y1="270" x2="580" y2="120" class="svg-axis" stroke="#06B6D4" stroke-width="1.5" stroke-dasharray="10 4 2 4" />
+          <ellipse cx="180" cy="240" rx="85" ry="135" class="svg-part-body" fill="#0F172A" stroke="#64748B" stroke-width="4" />
+          <ellipse cx="180" cy="240" rx="45" ry="70" class="svg-part-accent" fill="#1E293B" stroke="#CBD5E1" stroke-width="2.5" />
+          <ellipse cx="180" cy="240" rx="10" ry="16" fill="#F59E0B" />
+          <path d="M 275 165 C 290 135, 325 135, 340 165 L 330 230 C 310 210, 290 210, 280 230 Z" class="svg-part-accent" fill="#1E293B" stroke="#FFFFFF" stroke-width="2.5" />
+          <path d="M 345 100 L 405 85 L 415 190 L 355 205 Z" class="svg-part-body" fill="#162032" stroke="#CBD5E1" stroke-width="3" />
+          <rect x="225" y="105" width="52" height="16" rx="4" fill="#F59E0B" stroke="#FFFFFF" stroke-width="1.5" />
+          <path d="M 425 120 C 465 95, 515 95, 545 130 L 515 225 C 485 205, 445 205, 425 225 Z" class="svg-part-body" fill="#111827" stroke="#06B6D4" stroke-width="4" />
+          <ellipse cx="470" cy="170" rx="26" ry="36" fill="#1E293B" stroke="#06B6D4" stroke-width="2" />
+          <path d="M 510 115 C 540 90, 560 60, 585 35" fill="none" stroke="#EF4444" stroke-width="5" stroke-linecap="round" />
+          <circle cx="510" cy="115" r="7" fill="#EF4444" stroke="#FFFFFF" stroke-width="2" />
+        `;
+      } else if (poster.code === "К130") {
+        artwork = `
+          <ellipse cx="175" cy="235" rx="75" ry="125" class="svg-part-body" fill="#0F172A" stroke="#64748B" stroke-width="4" stroke-dasharray="12 4" />
+          <ellipse cx="175" cy="235" rx="35" ry="55" fill="#1E293B" stroke="#CBD5E1" stroke-width="2" />
+          <circle cx="380" cy="230" r="135" class="svg-part-body" fill="#111827" stroke="#334155" stroke-width="3" />
+          <path d="M 315 130 A 105 105 0 0 0 315 330" fill="none" stroke="#F59E0B" stroke-width="16" stroke-linecap="round" />
+          <path d="M 445 130 A 105 105 0 0 1 445 330" fill="none" stroke="#F59E0B" stroke-width="16" stroke-linecap="round" />
+          <rect x="335" y="100" width="90" height="32" rx="6" class="svg-part-accent" fill="#334155" stroke="#06B6D4" stroke-width="3" />
+          <line x1="320" y1="315" x2="440" y2="315" stroke="#10B981" stroke-width="5" stroke-dasharray="6 3" />
+          <path d="M 445 270 C 490 270, 520 290, 550 320" fill="none" stroke="#06B6D4" stroke-width="4" />
+        `;
+      } else {
+        artwork = `
+          <line x1="40" y1="230" x2="660" y2="230" class="svg-axis" stroke="#06B6D4" stroke-width="1.5" stroke-dasharray="10 4" />
+          <rect x="260" y="212" width="220" height="36" rx="8" class="svg-part-body" fill="#162032" stroke="#06B6D4" stroke-width="3.5" />
+          <rect x="280" y="145" width="34" height="72" rx="5" class="svg-part-accent" fill="#334155" stroke="#F59E0B" stroke-width="2.5" />
+          <rect x="215" y="208" width="50" height="44" rx="6" fill="#090D16" stroke="#10B981" stroke-width="3" stroke-dasharray="5 3" />
+          <rect x="475" y="208" width="50" height="44" rx="6" fill="#090D16" stroke="#10B981" stroke-width="3" stroke-dasharray="5 3" />
+          <line x1="120" y1="230" x2="215" y2="230" stroke="#CBD5E1" stroke-width="8" />
+          <line x1="525" y1="230" x2="610" y2="230" stroke="#CBD5E1" stroke-width="8" />
+          <circle cx="95" cy="250" r="18" fill="#F59E0B" stroke="#FFFFFF" stroke-width="3" />
+          <circle cx="615" cy="250" r="18" fill="#F59E0B" stroke="#FFFFFF" stroke-width="3" />
+        `;
+      }
+
+      // Выносные линии-полки по ГОСТ и интерактивные кружки с номерами позиций
+      const leaderLinesSvg = parts.map(p => `
+        <g class="cursor-pointer" onclick="selectPartPosition(${p.pos})">
+          <line x1="${p.x}" y1="${p.y}" x2="${p.lx}" y2="${p.ly}" class="svg-leader" stroke="#F59E0B" stroke-width="2" />
+          <circle cx="${p.x}" cy="${p.y}" r="5" fill="#F59E0B" stroke="#FFFFFF" stroke-width="1.5" />
+          <circle id="svg-pin-${p.pos}" cx="${p.lx}" cy="${p.ly}" r="16" fill="${selectedPos === p.pos ? '#06B6D4' : '#F59E0B'}" stroke="#FFFFFF" stroke-width="2.5" />
+          <text x="${p.lx}" y="${p.ly + 4}" fill="#000000" font-size="12" font-weight="800" font-family="monospace" text-anchor="middle">${p.pos}</text>
+        </g>
+      `).join("");
+
+      svg.innerHTML = artwork + leaderLinesSvg;
+    }
+
+    /* =========================================================================
+       6. СПЕЦИФИКАЦИЯ ДЕТАЛЕЙ AVTOALL И ВЗАИМОДЕЙСТВИЕ
+       ========================================================================= */
+    function renderSpecificationList(parts) {
+      const container = document.getElementById("specListContainer");
+      container.innerHTML = "";
+      document.getElementById("specCounterBadge").textContent = `${parts.length} поз.`;
+
+      parts.forEach(p => {
+        const isSelected = selectedPos === p.pos;
+        const card = document.createElement("div");
+        card.id = `spec-row-${p.pos}`;
+        card.onclick = () => selectPartPosition(p.pos);
+        card.className = `p-3 rounded-xl border transition-all cursor-pointer ${
+          isSelected 
+            ? "bg-cyan-950/50 border-cyan-400 shadow-lg" 
+            : "bg-[#090D16] border-[#1F2937] hover:border-[#374151]"
+        }`;
+
+        card.innerHTML = `
+          <div class="flex items-start justify-between gap-2">
+            <div class="flex items-center space-x-2.5">
+              <span class="w-7 h-7 rounded-full ${isSelected ? 'bg-cyan-400' : 'bg-amber-500'} text-black font-mono font-extrabold text-xs flex items-center justify-center flex-shrink-0 shadow">
+                ${p.pos}
+              </span>
+              <div>
+                <div class="flex items-center space-x-2">
+                  <span onclick="event.stopPropagation(); copyOem('${p.oem}')" class="font-mono font-bold text-cyan-400 hover:underline text-xs flex items-center space-x-1" title="Скопировать OEM номер">
+                    <span>${p.oem}</span>
+                    <i class="fa-regular fa-copy text-[10px] text-slate-400"></i>
+                  </span>
+                  <span class="text-[10px] bg-[#162032] text-slate-300 px-1.5 py-0.5 rounded font-mono">Кол-во: ${p.qty} шт</span>
+                </div>
+                <div class="text-xs text-slate-200 font-medium mt-1 leading-snug">${p.name}</div>
+              </div>
+            </div>
+
+            <div class="text-right flex-shrink-0">
+              <div class="font-mono font-bold text-white text-xs">${p.price.toLocaleString('ru-RU')} ₽</div>
+              <button 
+                onclick="event.stopPropagation(); addToOrderCart(${p.pos})" 
+                class="mt-1.5 px-2.5 py-1 bg-emerald-600/20 hover:bg-emerald-600 text-emerald-300 hover:text-white border border-emerald-600/40 rounded text-[10px] font-semibold transition-colors"
+              >
+                + В заказ
+              </button>
+            </div>
+          </div>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    function selectPartPosition(pos) {
+      selectedPos = pos;
+      if (currentViewMode !== "poster") {
+        setViewMode("poster");
+      } else {
+        const parts = currentPoster.getParts(currentModel);
+        drawPosterExplodedView(currentPoster, parts);
+        renderSpecificationList(parts);
+      }
+
+      const row = document.getElementById(`spec-row-${pos}`);
+      if (row) {
+        row.scrollIntoView({ behavior: "smooth", block: "nearest" });
+      }
+    }
+
+    /* Фильтрация внутри текущего узла */
+    function filterSpecTable(val) {
+      const q = val.trim().toUpperCase();
+      const allParts = currentPoster.getParts(currentModel);
+      if (!q) {
+        renderSpecificationList(allParts);
+        return;
+      }
+      const filtered = allParts.filter(p => p.name.toUpperCase().includes(q) || p.oem.toUpperCase().includes(q));
+      renderSpecificationList(filtered);
+    }
+
+    /* Глобальный сквозной поиск по всем плакатам */
+    function onGlobalSearch(val) {
+      const q = val.trim().toUpperCase();
+      if (q.length < 3) return;
+
+      for (const poster of AVTOALL_POSTERS) {
+        const parts = poster.getParts(currentModel);
+        const match = parts.find(p => p.oem.toUpperCase().includes(q) || p.name.toUpperCase().includes(q));
+        if (match) {
+          currentPoster = poster;
+          selectedPos = match.pos;
+          setViewMode("poster");
+          return;
+        }
+      }
+      showToast("Совпадений не найдено для выбранной модели");
+    }
+
+    function clearGlobalSearch() {
+      document.getElementById("globalSearchInput").value = "";
+      selectedPos = null;
+      refreshWorkspace();
+      document.getElementById("globalSearchInput").focus();
+    }
+
+    function toggleBlueprintTheme() {
+      isLightBlueprint = !isLightBlueprint;
+      const vp = document.getElementById("blueprintViewport");
+      const label = document.getElementById("themeLabel");
+      if (isLightBlueprint) {
+        vp.classList.remove("blueprint-dark");
+        vp.classList.add("blueprint-light");
+        label.textContent = "Фон: ГОСТ";
+      } else {
+        vp.classList.remove("blueprint-light");
+        vp.classList.add("blueprint-dark");
+        label.textContent = "Фон: CAD";
+      }
+    }
+
+    function zoomDrawing(factor) {
+      currentZoom = Math.min(Math.max(currentZoom * factor, 0.75), 2.2);
+      document.getElementById("drawingTransformBox").style.transform = `scale(${currentZoom})`;
+    }
+    function resetDrawingZoom() {
+      currentZoom = 1.0;
+      document.getElementById("drawingTransformBox").style.transform = `scale(1)`;
+    }
+
+    /* =========================================================================
+       7. КОРЗИНА ЗАКАЗА ЗАПЧАСТЕЙ (ДЕФЕКТОВОЧНАЯ ВЕДОМОСТЬ)
+       ========================================================================= */
+    function addToOrderCart(pos) {
+      const parts = currentPoster.getParts(currentModel);
+      const part = parts.find(p => p.pos === pos);
+      if (!part) return;
+
+      const existing = orderCart.find(i => i.oem === part.oem);
+      if (existing) {
+        existing.qty += 1;
+      } else {
+        orderCart.push({ ...part, modelName: currentModel.name });
+      }
+      updateOrderBadge();
+      showToast(`Добавлено в наряд: ${part.oem}`);
+    }
+
+    function addAllNodePartsToOrder() {
+      const parts = currentPoster.getParts(currentModel);
+      parts.forEach(p => {
+        const existing = orderCart.find(i => i.oem === p.oem);
+        if (!existing) {
+          orderCart.push({ ...p, modelName: currentModel.name });
+        }
+      });
+      updateOrderBadge();
+      showToast(`Все детали плаката ${currentPoster.code} добавлены в заказ-наряд!`);
+    }
+
+    function updateOrderBadge() {
+      document.getElementById("orderCartCount").textContent = orderCart.length;
+    }
+
+    function openOrderModal() {
+      const tbody = document.getElementById("orderModalTbody");
+      tbody.innerHTML = "";
+      let total = 0;
+
+      if (orderCart.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="5" class="py-6 text-center text-slate-500">Заказ-наряд пуст. Добавьте детали из спецификации узла.</td></tr>`;
+      } else {
+        orderCart.forEach((item, idx) => {
+          const sum = item.price * item.qty;
+          total += sum;
+          const tr = document.createElement("tr");
+          tr.innerHTML = `
+            <td class="py-2 px-3 font-mono font-bold text-cyan-400">${item.oem}</td>
+            <td class="py-2 px-3 text-slate-200">${item.name}</td>
+            <td class="py-2 px-2 text-center font-mono">${item.qty} шт</td>
+            <td class="py-2 px-3 text-right font-mono font-bold text-white">${sum.toLocaleString('ru-RU')} ₽</td>
+            <td class="py-2 px-2 text-right">
+              <button onclick="removeOrderItem(${idx})" class="text-red-400 hover:text-red-300">
+                <i class="fa-solid fa-trash-can"></i>
+              </button>
+            </td>
+          `;
+          tbody.appendChild(tr);
+        });
+      }
+
+      document.getElementById("orderTotalPrice").textContent = `${total.toLocaleString('ru-RU')} ₽`;
+      document.getElementById("orderModal").classList.remove("hidden");
+    }
+
+    function closeOrderModal() {
+      document.getElementById("orderModal").classList.add("hidden");
+    }
+
+    function removeOrderItem(idx) {
+      orderCart.splice(idx, 1);
+      updateOrderBadge();
+      openOrderModal();
+    }
+
+    function clearOrderCart() {
+      orderCart = [];
+      updateOrderBadge();
+      openOrderModal();
+    }
+
+    async function copyOem(oem) {
+      try {
+        if (navigator.clipboard && window.isSecureContext) {
+          await navigator.clipboard.writeText(oem);
+        } else {
+          const helper = document.createElement("textarea");
+          helper.value = oem;
+          helper.setAttribute("readonly", "");
+          helper.style.position = "fixed";
+          helper.style.opacity = "0";
+          document.body.appendChild(helper);
+          helper.select();
+          const copied = document.execCommand("copy");
+          helper.remove();
+          if (!copied) throw new Error("copy unavailable");
+        }
+        showToast(`Артикул ${oem} скопирован`);
+      } catch (error) {
+        showToast(`Не удалось скопировать: ${oem}`);
+      }
+    }
+
+    function showToast(text) {
+      const t = document.getElementById("toastAlert");
+      t.textContent = text;
+      t.classList.remove("hidden");
+      setTimeout(() => t.classList.add("hidden"), 2400);
+    }
+  </script>
+</body>
+</html>

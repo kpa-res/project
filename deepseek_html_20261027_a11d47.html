@@ -1,0 +1,1753 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>АвтоКаталог ВАЗ — каталог для автосервиса</title>
+<style>
+:root{
+  --bg:#f4f6f9; --card:#fff; --ink:#151a22; --muted:#6b7686; --line:#e3e8ef;
+  --accent:#e53935; --accent-d:#c62828; --dark:#161b24; --dark-2:#1f2632;
+  --r:14px; --shadow:0 2px 10px rgba(20,26,34,.06);
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{font:15px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;background:var(--bg);color:var(--ink);-webkit-font-smoothing:antialiased}
+a{color:inherit;text-decoration:none}
+button{font:inherit;cursor:pointer;border:none;background:none;color:inherit}
+.wrap{max-width:1140px;margin:0 auto;padding:0 18px}
+
+.topbar{position:sticky;top:0;z-index:50;background:var(--dark);color:#fff;box-shadow:0 2px 14px rgba(0,0,0,.18)}
+.topbar .wrap{display:flex;align-items:center;gap:22px;height:62px}
+.logo{font-weight:800;letter-spacing:.5px;font-size:17px;white-space:nowrap}
+.logo span{color:var(--accent)}
+.search-wrap{position:relative;flex:1;max-width:520px}
+#search{width:100%;height:40px;border-radius:10px;border:1px solid #2b3341;background:var(--dark-2);color:#fff;padding:0 14px 0 38px;outline:none;font-size:14px}
+#search::placeholder{color:#7d8798}
+#search:focus{border-color:var(--accent)}
+.search-ico{position:absolute;left:12px;top:11px;opacity:.55;pointer-events:none}
+.search-results{position:absolute;top:46px;left:0;right:0;background:#fff;color:var(--ink);border-radius:12px;box-shadow:0 12px 34px rgba(15,20,30,.22);overflow:hidden;max-height:70vh;overflow-y:auto}
+.search-results.hidden{display:none}
+.sr-item{display:block;padding:10px 14px;border-bottom:1px solid var(--line);font-size:14px}
+.sr-item:last-child{border-bottom:none}
+.sr-item:hover{background:#f4f6f9}
+.sr-item b{font-weight:600}
+.sr-item small{display:block;color:var(--muted);font-size:12px}
+.sr-empty{padding:14px;color:var(--muted);font-size:14px}
+
+.crumbs{background:#fff;border-bottom:1px solid var(--line);font-size:13px}
+.crumbs .wrap{display:flex;gap:8px;align-items:center;height:42px;overflow-x:auto;white-space:nowrap}
+.crumbs a{color:var(--muted)}
+.crumbs a:hover{color:var(--accent)}
+.crumbs span.sep{color:#c3cad6}
+.crumbs .cur{color:var(--ink);font-weight:600}
+
+main{padding:26px 0 70px;min-height:60vh}
+h1{font-size:26px;margin:0 0 8px;letter-spacing:-.4px}
+h2.section-title{font-size:19px;margin:34px 0 14px}
+.hero{background:linear-gradient(135deg,#1f2632,#2c3546);color:#fff;border-radius:18px;padding:30px 28px;margin-bottom:10px}
+.hero h1{color:#fff}
+.hero p{color:#b9c2d1;margin:0 0 22px;max-width:640px}
+.stats{display:flex;gap:26px;flex-wrap:wrap}
+.stats div{display:flex;flex-direction:column}
+.stats b{font-size:22px;color:#fff;line-height:1.1}
+.stats span{font-size:12px;color:#93a0b4;text-transform:uppercase;letter-spacing:.6px}
+
+.grid{display:grid;gap:16px}
+.grid.families{grid-template-columns:repeat(auto-fill,minmax(320px,1fr))}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:18px;box-shadow:var(--shadow)}
+.card h3{margin:0 0 12px;font-size:16px}
+
+.fam{display:flex;flex-direction:column;gap:10px;transition:.16s;cursor:pointer}
+.fam:hover{transform:translateY(-2px);border-color:#cfd7e3;box-shadow:0 8px 22px rgba(20,26,34,.09)}
+.fam-head{display:flex;justify-content:space-between;align-items:baseline;gap:10px}
+.fam-name{font-size:17px;font-weight:700}
+.fam-years{font-size:12px;color:var(--muted);white-space:nowrap}
+.fam-desc{font-size:13px;color:var(--muted)}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{font-size:12px;padding:3px 9px;border-radius:20px;background:#eef1f6;color:#495261;border:1px solid #e3e8ef}
+
+.mod-row{display:flex;justify-content:space-between;align-items:center;gap:14px;padding:15px 18px;background:#fff;border:1px solid var(--line);border-radius:12px;margin-bottom:10px;transition:.15s}
+.mod-row:hover{border-color:#cfd7e3;box-shadow:var(--shadow)}
+.mod-row .name{font-weight:600}
+.mod-row .sub{font-size:13px;color:var(--muted)}
+.arrow{color:#b9c2d1;font-size:20px}
+
+.btn{display:inline-flex;align-items:center;gap:7px;height:38px;padding:0 16px;border-radius:10px;background:var(--accent);color:#fff;font-weight:600;font-size:14px;transition:.15s}
+.btn:hover{background:var(--accent-d)}
+.btn.ghost{background:#eef1f6;color:#3d4655}
+.btn.ghost:hover{background:#e2e7ef}
+
+.mod-head{background:#fff;border:1px solid var(--line);border-radius:16px;padding:22px;box-shadow:var(--shadow);margin-bottom:20px}
+.mod-head .tag{display:inline-block;font-size:12px;font-weight:600;color:var(--accent-d);background:#fdeaea;border:1px solid #f7cfcf;border-radius:20px;padding:3px 10px;margin-bottom:10px}
+.quick{display:flex;gap:26px;flex-wrap:wrap;margin-top:16px;padding-top:16px;border-top:1px solid var(--line)}
+.quick div{display:flex;flex-direction:column}
+.quick span{font-size:11.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px}
+.quick b{font-size:15px}
+
+.tabs{display:flex;gap:6px;border-bottom:2px solid var(--line);margin-bottom:22px;overflow-x:auto}
+.tab{padding:11px 16px;font-size:14px;font-weight:600;color:var(--muted);border-bottom:3px solid transparent;margin-bottom:-2px;white-space:nowrap}
+.tab:hover{color:var(--ink)}
+.tab.active{color:var(--accent);border-bottom-color:var(--accent)}
+
+table{width:100%;border-collapse:collapse}
+.kv th{text-align:left;font-weight:500;color:var(--muted);padding:9px 0;width:45%;border-bottom:1px solid var(--line);vertical-align:top;font-size:14px}
+.kv td{padding:9px 0;border-bottom:1px solid var(--line);font-size:14px;font-weight:500}
+.kv tr:last-child th,.kv tr:last-child td{border-bottom:none}
+
+.cols{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media(max-width:820px){.cols{grid-template-columns:1fr}}
+
+.fluid{padding:11px 0;border-bottom:1px solid var(--line)}
+.fluid:last-child{border-bottom:none}
+.fluid-k{font-size:13px;color:var(--muted)}
+.fluid-v{font-weight:600;font-size:15px}
+.fluid-n{font-size:12.5px;color:var(--muted)}
+
+.docs-card{margin-top:16px}
+.doc-row{display:flex;align-items:flex-start;gap:12px;padding:11px 0;border-bottom:1px solid var(--line);text-decoration:none;color:inherit;transition:.15s}
+.doc-row:last-child{border-bottom:none}
+.doc-row:hover{background:#fafbfd;padding-left:6px;padding-right:6px;border-radius:8px}
+.doc-ico{width:32px;height:32px;flex-shrink:0;border-radius:8px;background:#eef4ff;color:#1a52a8;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700}
+.doc-body{flex:1}
+.doc-type{font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin-bottom:2px}
+.doc-title{font-size:14px;font-weight:600;color:var(--ink)}
+.doc-row:hover .doc-title{color:var(--accent-d)}
+.doc-arrow{color:#b9c2d1;font-size:18px;align-self:center}
+
+.filters{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap}
+.filters button{padding:6px 13px;border-radius:20px;background:#eef1f6;font-size:13px;color:#495261;border:1px solid #e3e8ef}
+.filters button.active{background:var(--dark);color:#fff;border-color:var(--dark)}
+
+table.data{font-size:14px;background:#fff;border-radius:12px;overflow:hidden;border:1px solid var(--line)}
+table.data thead th{background:#f0f3f8;text-align:left;padding:11px 14px;font-size:12.5px;text-transform:uppercase;letter-spacing:.4px;color:#5c6678;font-weight:600;white-space:nowrap}
+table.data td{padding:11px 14px;border-top:1px solid var(--line);vertical-align:top}
+table.data tr:hover td{background:#fafbfd}
+.tag-type{font-size:11.5px;font-weight:600;padding:2px 9px;border-radius:20px;white-space:nowrap}
+.t-replace{background:#e8f5e9;color:#2e7d32}
+.t-check{background:#e3f2fd;color:#1565c0}
+.t-adjust{background:#fff4e5;color:#b26a00}
+tr.critical td{background:#fff7f7}
+tr.critical:hover td{background:#ffefef}
+.crit-badge{display:inline-block;font-size:11px;font-weight:700;color:#fff;background:var(--accent);border-radius:4px;padding:1px 6px;margin-left:6px;vertical-align:middle}
+
+details.proc{background:#fff;border:1px solid var(--line);border-radius:12px;margin-bottom:12px;overflow:hidden}
+details.proc summary{padding:15px 18px;display:flex;justify-content:space-between;align-items:center;gap:12px;cursor:pointer;list-style:none;font-weight:600;font-size:15px}
+details.proc summary::-webkit-details-marker{display:none}
+details.proc summary:hover{background:#fafbfd}
+details.proc[open] summary{border-bottom:1px solid var(--line);background:#fafbfd}
+.proc-meta{display:flex;gap:8px;flex-wrap:wrap}
+.pill{font-size:12px;font-weight:500;color:#495261;background:#eef1f6;border-radius:20px;padding:3px 10px;white-space:nowrap}
+.pill.hard{background:#fdeaea;color:var(--accent-d)}
+.pill.mid{background:#fff4e5;color:#b26a00}
+.pill.easy{background:#e8f5e9;color:#2e7d32}
+.proc-body{padding:18px}
+.proc-body h4{margin:18px 0 9px;font-size:13px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted)}
+.proc-body h4:first-child{margin-top:0}
+.tool-chips{display:flex;flex-wrap:wrap;gap:7px}
+.tool-chip{font-size:13px;background:#f0f3f8;border:1px solid var(--line);border-radius:8px;padding:5px 11px}
+
+ol.steps{list-style:none;margin:0;padding:0;counter-reset:s}
+ol.steps li{position:relative;padding:0 0 16px 42px;counter-increment:s;border-left:2px solid #eef1f6;margin-left:13px}
+ol.steps li:last-child{border-left-color:transparent;padding-bottom:0}
+ol.steps li::before{content:counter(s);position:absolute;left:-14px;top:-2px;width:28px;height:28px;border-radius:50%;background:var(--dark);color:#fff;font-size:13px;font-weight:700;display:flex;align-items:center;justify-content:center}
+.step-text{font-size:14.5px;padding-top:2px}
+.step-extra{display:flex;flex-wrap:wrap;gap:7px;margin-top:8px}
+.torque{font-size:12.5px;font-weight:600;background:#fff4e5;color:#b26a00;border:1px solid #ffe0b2;border-radius:7px;padding:3px 9px}
+.part-link{font-size:12.5px;background:#eef4ff;color:#1a52a8;border:1px solid #d3e0f7;border-radius:7px;padding:3px 9px}
+.part-link:hover{background:#dde8fb}
+.warn{background:#fff7f7;border:1px solid #f7cfcf;border-left:4px solid var(--accent);border-radius:10px;padding:13px 16px;margin-top:16px;font-size:14px}
+.warn b{color:var(--accent-d)}
+.warn ul{margin:8px 0 0;padding-left:20px}
+.warn li{margin-bottom:5px}
+
+.diag-tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}
+.diag-tab{padding:8px 15px;border-radius:10px;background:#fff;border:1px solid var(--line);font-size:13.5px;font-weight:600;color:#495261}
+.diag-tab.active{background:var(--dark);color:#fff;border-color:var(--dark)}
+.diagram-box{background:#fff;border:1px solid var(--line);border-radius:14px;padding:12px;box-shadow:var(--shadow)}
+svg.diagram{width:100%;height:auto;display:block;border-radius:10px;background:#fbfcfe}
+.part-shape{fill:#dfe4ee;stroke:#9aa6bd;stroke-width:2;cursor:pointer;transition:.15s}
+.part-shape:hover{fill:#cfd8e8}
+.part-shape.is-sel{filter:drop-shadow(0 0 7px rgba(229,57,53,.9));stroke:#e53935}
+.badge{cursor:pointer}
+.badge circle{fill:#e53935;stroke:#fff;stroke-width:2}
+.badge text{fill:#fff;font:700 14px sans-serif;text-anchor:middle;pointer-events:none}
+.badge.is-sel circle{fill:#161b24;stroke:#e53935;stroke-width:3}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12.5px;color:var(--muted);padding:10px 6px 0}
+
+table.parts{margin-top:16px}
+table.parts td{padding:9px 14px}
+table.parts tbody tr{cursor:pointer}
+table.parts tbody tr.is-sel td{background:#fdeaea}
+.badge-cell{display:inline-flex;width:24px;height:24px;border-radius:50%;background:var(--accent);color:#fff;font-size:12.5px;font-weight:700;align-items:center;justify-content:center}
+tr.is-sel .badge-cell{background:var(--dark)}
+.oem{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:13px;color:#1a52a8;border-bottom:1px dashed #9db8e8}
+.oem:hover{color:var(--accent)}
+
+.modal{position:fixed;inset:0;z-index:100;display:flex;align-items:center;justify-content:center;padding:20px}
+.modal[hidden]{display:none}
+.modal-backdrop{position:absolute;inset:0;background:rgba(12,16,22,.55);backdrop-filter:blur(2px)}
+.modal-card{position:relative;background:#fff;border-radius:16px;max-width:520px;width:100%;max-height:86vh;overflow-y:auto;padding:26px;box-shadow:0 24px 60px rgba(0,0,0,.3)}
+.modal-x{position:absolute;top:12px;right:14px;font-size:26px;line-height:1;color:var(--muted)}
+.modal-x:hover{color:var(--ink)}
+.poem{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:15px;font-weight:600;background:#f0f3f8;border-radius:8px;padding:8px 12px;display:inline-block;margin:6px 0 14px}
+.cross-list{display:flex;flex-direction:column;gap:7px}
+.cross-item{display:flex;justify-content:space-between;gap:10px;padding:9px 12px;border:1px solid var(--line);border-radius:9px;font-size:13.5px}
+.cross-item span:last-child{color:var(--muted)}
+.empty{color:var(--muted);font-size:14px;padding:18px;text-align:center;background:#fff;border:1px dashed var(--line);border-radius:12px}
+
+footer{border-top:1px solid var(--line);background:#fff;padding:22px 0;font-size:13px;color:var(--muted)}
+.toast{position:fixed;left:50%;bottom:28px;transform:translateX(-50%) translateY(80px);opacity:0;background:var(--dark);color:#fff;padding:12px 22px;border-radius:10px;font-size:14px;z-index:200;transition:.28s}
+.toast.show{transform:translateX(-50%) translateY(0);opacity:1}
+
+@media(max-width:640px){
+  .topbar .wrap{height:auto;padding-top:10px;padding-bottom:10px;flex-wrap:wrap;gap:10px}
+  .search-wrap{max-width:none;flex-basis:100%}
+  h1{font-size:21px}
+  .hero{padding:22px 20px}
+  .quick{gap:18px}
+}
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="wrap">
+    <a class="logo" href="#/">АВТО<span>КАТАЛОГ</span></a>
+    <div class="search-wrap">
+      <svg class="search-ico" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4">
+        <circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/>
+      </svg>
+      <input id="search" type="search" placeholder="Модель, модификация или номер детали…" autocomplete="off">
+      <div id="search-results" class="search-results hidden"></div>
+    </div>
+  </div>
+</header>
+
+<nav id="crumbs" class="crumbs"><div class="wrap"></div></nav>
+
+<main><div id="app" class="wrap"></div></main>
+
+<footer>
+  <div class="wrap">
+    Демонстрационный каталог АвтоВАЗ для мобильного приложения автосервиса · данные моделей и регламентов приведены в справочных целях и требуют сверки с сервисной документацией.
+  </div>
+</footer>
+
+<div id="modal" class="modal" hidden>
+  <div class="modal-backdrop" data-close></div>
+  <div class="modal-card">
+    <button class="modal-x" data-close aria-label="Закрыть">×</button>
+    <div id="modal-body"></div>
+  </div>
+</div>
+
+<div id="toast" class="toast"></div>
+
+<script>
+/* =========================================================
+   1. УТИЛИТЫ
+   ========================================================= */
+const $  = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => (
+  { '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]
+));
+
+/* =========================================================
+   2. СПРАВОЧНИК ДЕТАЛЕЙ
+   ========================================================= */
+const PARTS = {
+  '21126-1006040': { name:'Ремень ГРМ 16V (21126 / 21127)', brand:'АвтоВАЗ', crosses:['Gates 5670XS','HOLA TH1172','Bosch 1987949520'], price:'1 490 ₽', stock:'На складе — 12 шт.' },
+  '2110-1006040' : { name:'Ремень ГРМ 8V (2110 / 1118x)',   brand:'АвтоВАЗ', crosses:['Gates 5550XS','Contitech CT979','HOLA TH1170'], price:'890 ₽', stock:'На складе — 24 шт.' },
+  '21126-1006230': { name:'Ролик натяжной ГРМ 16V',          brand:'АвтоВАЗ', crosses:['INA 531 0561 10','SKF VKM 16250'], price:'1 120 ₽', stock:'На складе — 6 шт.' },
+  '2110-1006240' : { name:'Ролик натяжной ГРМ 8V',           brand:'АвтоВАЗ', crosses:['INA 531 0544 10','HOLA TH1173'], price:'740 ₽', stock:'На складе — 9 шт.' },
+  '2112-1006120' : { name:'Ролик обводной ГРМ',              brand:'АвтоВАЗ', crosses:['INA 532 0260 10','SKF VKM 16150'], price:'620 ₽', stock:'На складе — 14 шт.' },
+  '2110-1005030' : { name:'Шкив коленчатого вала',           brand:'АвтоВАЗ', crosses:['-'], price:'2 340 ₽', stock:'Под заказ — 2 дня' },
+  '2112-1006017' : { name:'Шкив распределительного вала',    brand:'АвтоВАЗ', crosses:['-'], price:'1 860 ₽', stock:'На складе — 3 шт.' },
+  '2110-1307010' : { name:'Насос охлаждения (помпа)',        brand:'АвтоВАЗ / Luzar', crosses:['Luzar 2110-1307010','Hepu P872'], price:'2 150 ₽', stock:'На складе — 5 шт.' },
+  '2110-1012005' : { name:'Фильтр масляный',                 brand:'АвтоВАЗ', crosses:['MANN W 914/2','Mahle OC 384','Bosch 0451103312'], price:'280 ₽', stock:'На складе — 60 шт.' },
+  '2108-1012005' : { name:'Кольцо сливной пробки поддона',   brand:'АвтоВАЗ', crosses:['-'], price:'35 ₽', stock:'На складе — 200 шт.' },
+  '1118-1109080' : { name:'Фильтр воздушный',                brand:'АвтоВАЗ', crosses:['MANN C 2295','Filtron AP 089/1'], price:'390 ₽', stock:'На складе — 30 шт.' },
+  '2110-3707010' : { name:'Свеча зажигания',                 brand:'АвтоВАЗ / Bosch', crosses:['Bosch FR7DC+','NGK BPR6ES'], price:'190 ₽', stock:'На складе — 120 шт.' },
+  '2190-3501080' : { name:'Колодки тормозные передние (компл.)', brand:'АвтоВАЗ / TRW', crosses:['TRW GDB 3350','ATE 13.0460-7122.2'], price:'1 890 ₽', stock:'На складе — 8 компл.' },
+  '2108-3501080' : { name:'Колодки тормозные передние (компл.) 2108–2115', brand:'АвтоВАЗ / TRW', crosses:['TRW GDB 1042','ATE 13.0460-2902.2'], price:'1 250 ₽', stock:'На складе — 11 компл.' },
+  '2190-3501070' : { name:'Диск тормозной передний',         brand:'АвтоВАЗ', crosses:['Brembo 08.7625.10','ATE 24.0318-0101.1'], price:'2 780 ₽', stock:'На складе — 4 шт.' },
+  '2190-3501012' : { name:'Суппорт передний (правый)',       brand:'АвтоВАЗ', crosses:['-'], price:'4 950 ₽', stock:'Под заказ — 3 дня' },
+  '2115-3502080' : { name:'Колодки тормозные задние (барабанные)', brand:'АвтоВАЗ', crosses:['TRW GS 8686','ATE 03.0137-0531.2'], price:'1 340 ₽', stock:'На складе — 7 компл.' },
+  '2180-1601085' : { name:'Комплект сцепления',              brand:'АвтоВАЗ / Sachs', crosses:['Sachs 3000 951 121','Luk 623 3300 00'], price:'6 400 ₽', stock:'На складе — 3 компл.' },
+  '2190-3506070' : { name:'Шланг тормозной передний',        brand:'АвтоВАЗ', crosses:['-'], price:'690 ₽', stock:'На складе — 10 шт.' },
+  '2108-3501035' : { name:'Болт направляющей суппорта',      brand:'АвтоВАЗ', crosses:['-'], price:'120 ₽', stock:'На складе — 40 шт.' },
+  '2123-1006040' : { name:'Ремень ГРМ 2123 (Chevrolet Niva)', brand:'АвтоВАЗ / Gates', crosses:['Gates 5670XS','HOLA TH1172'], price:'1 550 ₽', stock:'Под заказ — 2 дня' },
+  '11194-1006040': { name:'Ремень ГРМ 16V (11194, Kalina 1.4)', brand:'АвтоВАЗ', crosses:['Gates 5550XS','Contitech CT979'], price:'920 ₽', stock:'На складе — 5 шт.' },
+  '1118-1012005' : { name:'Фильтр масляный (Kalina 1118)',   brand:'АвтоВАЗ / MANN', crosses:['MANN W 914/2','Mahle OC 384'], price:'290 ₽', stock:'На складе — 40 шт.' },
+  '2123-3501080' : { name:'Колодки передние (2123 / Niva Travel)', brand:'АвтоВАЗ / TRW', crosses:['TRW GDB 3350','ATE 13.0460-7122.2'], price:'1 950 ₽', stock:'На складе — 4 компл.' }
+};
+
+function partInfo(oem, fallbackName) {
+  return PARTS[oem] || { name: fallbackName || 'Деталь', brand:'АвтоВАЗ', crosses:[], price:'—', stock:'Уточняйте у поставщика' };
+}
+
+/* =========================================================
+   3. ФАБРИКИ
+   ========================================================= */
+function stdMaintenance(extra = []) {
+  const base = [
+    { op:'Замена моторного масла и масляного фильтра', km:15000, mo:12,  type:'replace' },
+    { op:'Замена воздушного фильтра',                  km:30000, mo:null, type:'replace' },
+    { op:'Замена свечей зажигания',                    km:30000, mo:null, type:'replace' },
+    { op:'Замена тормозной жидкости',                  km:30000, mo:24,  type:'replace' },
+    { op:'Проверка толщины тормозных колодок',         km:15000, mo:12,  type:'check'   },
+    { op:'Проверка уровня и состояния жидкостей',      km:15000, mo:12,  type:'check'   },
+    { op:'Замена охлаждающей жидкости',                km:60000, mo:null, type:'replace' },
+    { op:'Замена ремня привода генератора',            km:60000, mo:null, type:'replace' }
+  ];
+  return base.concat(extra);
+}
+
+function baseProcedures() {
+  return [
+    {
+      id:'oil', title:'Замена моторного масла и масляного фильтра',
+      time:'30–40 мин', level:'Простая',
+      tools:['Ключ 17','Съёмник масляного фильтра','Ёмкость 5 л','Воронка','Динамометрический ключ'],
+      steps:[
+        { n:1, text:'Прогреть двигатель до рабочей температуры, заглушить и дать маслу стечь в поддон 5–10 минут.' },
+        { n:2, text:'Поднять автомобиль на подъёмнике, снять защиту двигателя (при наличии).' },
+        { n:3, text:'Подставить ёмкость, вывернуть сливную пробку поддона ключом 17. Слить масло полностью.', torque:'Пробка поддона: 25–30 Н·м' },
+        { n:4, text:'Заменить уплотнительное кольцо сливной пробки, завернуть пробку.', parts:[{ oem:'2108-1012005', name:'Кольцо сливной пробки' }], torque:'25–30 Н·м' },
+        { n:5, text:'Снять старый масляный фильтр съёмником. Смазать кольцо нового фильтра маслом и завернуть от руки.', parts:[{ oem:'2110-1012005', name:'Фильтр масляный' }] },
+        { n:6, text:'Залить масло до верхней метки щупа, запустить двигатель, проверить отсутствие течей.' },
+        { n:7, text:'Заглушить двигатель, через 5 минут проконтролировать уровень и довести до нормы.' }
+      ],
+      warnings:[
+        'Не перетягивайте сливную пробку — резьба в алюминиевом поддоне легко срывается.',
+        'Отработанное масло утилизируется согласно регламенту.'
+      ]
+    },
+    {
+      id:'pads', title:'Замена передних тормозных колодок',
+      time:'40–60 мин', level:'Средняя',
+      tools:['Ключ 13','Ключ 17','Шестигранник 7 мм','Струбцина','Очиститель тормозов','Динамометрический ключ'],
+      steps:[
+        { n:1, text:'Ослабить болты крепления колеса, поднять автомобиль, снять колесо.' },
+        { n:2, text:'Снять нижний направляющий болт суппорта, поднять суппорт вверх.' },
+        { n:3, text:'Извлечь старые колодки, очистить посадочные места щёткой и очистителем.' },
+        { n:4, text:'Утопить поршень суппорта струбциной (следить за уровнем жидкости в бачке).' },
+        { n:5, text:'Установить новые колодки, смазать направляющие специальной смазкой.', parts:[{ oem:'2190-3501080', name:'Колодки передние' }] },
+        { n:6, text:'Затянуть направляющий болт суппорта динамометрическим ключом.', torque:'Болт направляющей: 32–38 Н·м' },
+        { n:7, text:'Несколько раз нажать на педаль тормоза до упора, проверить уровень жидкости.' }
+      ],
+      warnings:[
+        'После замены первые 200 км избегайте экстренных торможений — приработка.',
+        'Момент затяжки направляющих болтов обязателен.'
+      ]
+    }
+  ];
+}
+
+function makeMod(cfg) {
+  const eng = cfg.engine;
+  const specs = cfg.specs || [
+    { k:'Двигатель',        v:`${eng.code} — ${eng.desc}` },
+    { k:'Мощность',         v:`${eng.power} л.с.` },
+    { k:'Крутящий момент',  v:`${eng.torque} Н·м` },
+    { k:'Коробка передач',  v:cfg.transmission },
+    { k:'Привод',           v:cfg.drive },
+    { k:'Тип кузова',       v:cfg.body },
+    { k:'Годы выпуска',     v:cfg.years }
+  ];
+  const fluids = cfg.fluids || [
+    { k:'Моторное масло',       v:(eng.power > 90 ? '3,5 л' : '3,2 л'), n:'API SJ/SL и выше · 5W-30 / 5W-40' },
+    { k:'Трансмиссионное масло', v:'2,8–3,0 л',                          n:'GL-4 · 75W-90 / 80W-85' },
+    { k:'Тормозная жидкость',    v:'DOT-4',                              n:'Замена каждые 2 года' },
+    { k:'Охлаждающая жидкость',  v:'G12+ (карбоксилатный)',              n:'Объём уточняется по комплектации' }
+  ];
+  return Object.assign({}, cfg, {
+    specs,
+    fluids,
+    maintenance: cfg.maintenance || stdMaintenance(),
+    procedures:  cfg.procedures  || baseProcedures(),
+    diagrams:    cfg.diagrams    || [],
+    docs:        cfg.docs        || []
+  });
+}
+
+/* =========================================================
+   4. ВЗРЫВ-СХЕМЫ
+   ========================================================= */
+const DIAGRAM_TIMING_8V = {
+  id:'timing-8v',
+  title:'Привод ГРМ — 8 клапанов',
+  unit:'Двигатель → Газораспределительный механизм',
+  viewBox:'0 0 640 430',
+  positions:[
+    { pos:1, name:'Шкив распределительного вала', oem:'2112-1006017', qty:1, type:'circle', cx:470, cy:130, r:60, badge:[556,86],  z:3, hole:true },
+    { pos:2, name:'Шкив коленчатого вала',        oem:'2110-1005030', qty:1, type:'circle', cx:150, cy:300, r:50, badge:[64,352],  z:3, hole:true },
+    { pos:3, name:'Ролик натяжной',               oem:'2110-1006240', qty:1, type:'circle', cx:360, cy:310, r:28, badge:[426,362], z:4 },
+    { pos:4, name:'Ролик обводной',               oem:'2112-1006120', qty:1, type:'circle', cx:300, cy:130, r:28, badge:[300,58],  z:4 },
+    { pos:5, name:'Насос охлаждения (помпа)',     oem:'2110-1307010', qty:1, type:'circle', cx:246, cy:352, r:34, badge:[152,404], z:6 },
+    { pos:6, name:'Ремень ГРМ',                   oem:'2110-1006040', qty:1, type:'belt', points:'150,300 300,130 470,130 360,310', width:18, badge:[392,206], z:1 }
+  ]
+};
+
+const DIAGRAM_TIMING_16V = {
+  id:'timing-16v',
+  title:'Привод ГРМ — 16 клапанов',
+  unit:'Двигатель → Газораспределительный механизм',
+  viewBox:'0 0 640 430',
+  positions:[
+    { pos:1, name:'Шкив впускного распредвала', oem:'2112-1006017', qty:1, type:'circle', cx:470, cy:130, r:60, badge:[556,86],  z:3, hole:true },
+    { pos:2, name:'Шкив коленчатого вала',      oem:'2110-1005030', qty:1, type:'circle', cx:150, cy:300, r:50, badge:[64,352],  z:3, hole:true },
+    { pos:3, name:'Ролик натяжной',             oem:'21126-1006230',qty:1, type:'circle', cx:360, cy:310, r:28, badge:[426,362], z:4 },
+    { pos:4, name:'Ролик обводной',             oem:'2112-1006120', qty:1, type:'circle', cx:300, cy:130, r:28, badge:[300,58],  z:4 },
+    { pos:5, name:'Насос охлаждения (помпа)',   oem:'2110-1307010', qty:1, type:'circle', cx:246, cy:352, r:34, badge:[152,404], z:6 },
+    { pos:6, name:'Ремень ГРМ 16V',             oem:'21126-1006040',qty:1, type:'belt', points:'150,300 300,130 470,130 360,310', width:18, badge:[392,206], z:1 }
+  ]
+};
+
+const DIAGRAM_BRAKES = {
+  id:'brakes-front',
+  title:'Передний тормозной механизм',
+  unit:'Тормозная система → Передние тормоза',
+  viewBox:'0 0 640 430',
+  positions:[
+    { pos:1, name:'Суппорт передний',            oem:'2190-3501012', qty:1, type:'rect', x:250, y:150, w:172, h:132, rx:18, badge:[452,128], z:5 },
+    { pos:2, name:'Диск тормозной передний',     oem:'2190-3501070', qty:1, type:'circle', cx:320, cy:216, r:112, badge:[462,330], z:2, hole:true },
+    { pos:3, name:'Колодки тормозные (комплект)',oem:'2190-3501080', qty:1, type:'rect', x:266, y:168, w:140, h:26, rx:8, badge:[492,236], z:7 },
+    { pos:4, name:'Шланг тормозной передний',    oem:'2190-3506070', qty:1, type:'rect', x:140, y:64, w:112, h:22, rx:11, badge:[122,50],  z:4 },
+    { pos:5, name:'Болт направляющей суппорта',  oem:'2108-3501035', qty:2, type:'circle', cx:276, cy:178, r:10, badge:[200,214], z:9 }
+  ]
+};
+
+/* =========================================================
+   5. БАЗА ДАННЫХ
+   ========================================================= */
+const DB = { families: [
+/* ---------- КЛАССИКА ---------- */
+{
+  id:'classic', name:'Классика', years:'1970–2012',
+  desc:'Заднеприводные седаны и универсалы на базе Fiat 124. Простая конструкция, ремонт в полевых условиях.',
+  models:[
+    { id:'vaz-2101', name:'ВАЗ-2101', years:'1970–1988', mods:[
+      makeMod({ id:'2101_12', name:'1.2 (ВАЗ-2101), 4-МКПП', body:'Седан', years:'1970–1988',
+        engine:{ code:'ВАЗ-2101', desc:'1.2 л, 8V, карбюратор', power:62, torque:87 },
+        transmission:'4-МКПП', drive:'Задний',
+        docs:[
+          { type:'Руководство по ремонту', title:'Классика ВАЗ — база руководств (VAZbook)', url:'https://www.vazbook.ru/' },
+          { type:'Каталог деталей', title:'7zap — каталог ВАЗ/LADA', url:'https://7zap.com/ru/catalog/cars/vaz/' }
+        ] })
+    ]},
+    { id:'vaz-2104', name:'ВАЗ-2104', years:'1984–2012', mods:[
+      makeMod({ id:'2104_15', name:'1.5 (ВАЗ-2103), 5-МКПП', body:'Универсал', years:'1984–2012',
+        engine:{ code:'ВАЗ-2103', desc:'1.5 л, 8V, карбюратор', power:72, torque:104 },
+        transmission:'5-МКПП', drive:'Задний' })
+    ]},
+    { id:'vaz-2105', name:'ВАЗ-2105', years:'1980–2010', mods:[
+      makeMod({ id:'2105_16', name:'1.6 (ВАЗ-2106), 5-МКПП', body:'Седан', years:'1980–2010',
+        engine:{ code:'ВАЗ-2106', desc:'1.6 л, 8V, карбюратор', power:75, torque:116 },
+        transmission:'5-МКПП', drive:'Задний' })
+    ]},
+    { id:'vaz-2106', name:'ВАЗ-2106', years:'1976–2006', mods:[
+      makeMod({ id:'2106_16', name:'1.6 (ВАЗ-2106), 5-МКПП', body:'Седан', years:'1976–2006',
+        engine:{ code:'ВАЗ-2106', desc:'1.6 л, 8V, карбюратор', power:75, torque:116 },
+        transmission:'5-МКПП', drive:'Задний' })
+    ]},
+    { id:'vaz-2107', name:'ВАЗ-2107', years:'1982–2012', mods:[
+      makeMod({ id:'2107_16', name:'1.6 (ВАЗ-2106), 5-МКПП', body:'Седан', years:'1982–2012',
+        engine:{ code:'ВАЗ-2106', desc:'1.6 л, 8V, карбюратор / инжектор', power:75, torque:116 },
+        transmission:'5-МКПП', drive:'Задний',
+        docs:[
+          { type:'Руководство по ремонту', title:'ВАЗ-2107 — ремонт и обслуживание (VAZbook)', url:'https://www.vazbook.ru/' },
+          { type:'Архив документации', title:'VNX.SU — документация по ВАЗ', url:'https://vnx.su/content/avto/vaz/lada.html' }
+        ],
+        procedures:[
+          {
+            id:'2107-valves', title:'Регулировка клапанов (8V, ВАЗ-2106)',
+            time:'40–60 мин', level:'Средняя',
+            tools:['Ключ 13','Ключ 17','Набор щупов','Отвёртка плоская','Прокладка клапанной крышки'],
+            steps:[
+              { n:1, text:'Снять клапанную крышку, очистить посадочную поверхность.' },
+              { n:2, text:'Выставить ВМТ такта сжатия 1-го цилиндра (метка на шкиве коленвала).' },
+              { n:3, text:'Проверить зазоры щупом: впуск — 0,15 мм, выпуск — 0,20 мм (на холодном двигателе).', torque:'Зазор: впуск 0,15 мм · выпуск 0,20 мм' },
+              { n:4, text:'Отрегулировать зазоры вращением регулировочных винтов коромысел, фиксируя гайкой.' },
+              { n:5, text:'Провернуть коленвал на 180° и повторить для следующих цилиндров (порядок 1-3-4-2).' },
+              { n:6, text:'Установить новую прокладку клапанной крышки, собрать, запустить двигатель.' }
+            ],
+            warnings:[
+              'Регулировку выполняйте только на холодном двигателе (20–25 °C).',
+              'Не перетягивайте гайки коромысел: шпильки легко срываются в алюминиевой ГБЦ.'
+            ]
+          },
+          ...baseProcedures()
+        ]
+      })
+    ]}
+  ]
+},
+/* ---------- САМАРА ---------- */
+{
+  id:'samara', name:'Самара', years:'1984–2013',
+  desc:'Переднеприводное семейство: хэтчбеки 2108/2109/2113/2114 и седаны 21099/2115.',
+  models:[
+    { id:'vaz-2108', name:'ВАЗ-2108', years:'1984–2004', mods:[
+      makeMod({ id:'2108_15', name:'1.5 (ВАЗ-21083), 5-МКПП', body:'Хэтчбек, 3 двери', years:'1984–2004',
+        engine:{ code:'ВАЗ-21083', desc:'1.5 л, 8V, карбюратор', power:70, torque:106 },
+        transmission:'5-МКПП', drive:'Передний' })
+    ]},
+    { id:'vaz-2109', name:'ВАЗ-2109', years:'1987–2004', mods:[
+      makeMod({ id:'2109_15', name:'1.5 (ВАЗ-21083), 5-МКПП', body:'Хэтчбек, 5 дверей', years:'1987–2004',
+        engine:{ code:'ВАЗ-21083', desc:'1.5 л, 8V, карбюратор / инжектор', power:70, torque:106 },
+        transmission:'5-МКПП', drive:'Передний' })
+    ]},
+    { id:'vaz-21099', name:'ВАЗ-21099', years:'1990–2004', mods:[
+      makeMod({ id:'21099_15', name:'1.5 (ВАЗ-21083), 5-МКПП', body:'Седан', years:'1990–2004',
+        engine:{ code:'ВАЗ-21083', desc:'1.5 л, 8V, карбюратор / инжектор', power:70, torque:106 },
+        transmission:'5-МКПП', drive:'Передний',
+        docs:[
+          { type:'Руководство по ремонту', title:'Samara — база руководств (VAZbook)', url:'https://www.vazbook.ru/' }
+        ] })
+    ]},
+    { id:'vaz-2113', name:'ВАЗ-2113', years:'2004–2013', mods:[
+      makeMod({ id:'2113_16', name:'1.6 (ВАЗ-11183), 5-МКПП', body:'Хэтчбек, 3 двери', years:'2004–2013',
+        engine:{ code:'ВАЗ-11183', desc:'1.6 л, 8V, инжектор', power:81, torque:120 },
+        transmission:'5-МКПП', drive:'Передний',
+        diagrams:[DIAGRAM_TIMING_8V] })
+    ]},
+    { id:'vaz-2114', name:'ВАЗ-2114', years:'2001–2013', mods:[
+      makeMod({ id:'2114_15', name:'1.5 (ВАЗ-2111), 5-МКПП', body:'Хэтчбек, 5 дверей', years:'2001–2007',
+        engine:{ code:'ВАЗ-2111', desc:'1.5 л, 8V, инжектор', power:78, torque:116 },
+        transmission:'5-МКПП', drive:'Передний',
+        docs:[
+          { type:'Руководство по ремонту', title:'ВАЗ-2114 — ремонт (VAZbook)', url:'https://www.vazbook.ru/' },
+          { type:'Каталог деталей', title:'7zap — 2114', url:'https://7zap.com/ru/catalog/cars/vaz/' }
+        ],
+        maintenance: stdMaintenance([
+          { op:'Замена ремня ГРМ и натяжного ролика', km:60000, mo:null, type:'replace', critical:true,
+            note:'Регламент 60 000 км. При обрыве на 8V с 2005 г. (проточки в поршнях) клапаны не встречаются с поршнями, но автомобиль обездвиживается.' },
+          { op:'Регулировка зазоров клапанов', km:30000, mo:null, type:'adjust',
+            note:'Проверка и регулировка подбором шайб.' }
+        ]),
+        procedures:[
+          {
+            id:'2114-timing', title:'Замена ремня ГРМ (8V, ВАЗ-2111)',
+            time:'1,5–2 ч', level:'Средняя',
+            tools:['Ключ 10','Ключ 13','Ключ 17','Ключ 19','Фиксатор маховика','Динамометрический ключ','Монтажная лопатка'],
+            steps:[
+              { n:1, text:'Снять ремень привода генератора, верхний кожух ГРМ (3 болта).' },
+              { n:2, text:'Выставить ВМТ: метка на шкиве коленвала должна совпасть с меткой на крышке, метка распредвала — с выступом на задней крышке ГРМ.' },
+              { n:3, text:'Зафиксировать маховик, ослабить болт шкива коленвала (только при необходимости снятия шкива).', torque:'Болт шкива коленвала: 90–110 Н·м' },
+              { n:4, text:'Ослабить натяжной ролик, снять старый ремень.', parts:[{ oem:'2110-1006040', name:'Ремень ГРМ 8V' }] },
+              { n:5, text:'Установить новый ремень, начиная с шкива коленвала, затем распредвал и ролик. Натянуть так, чтобы ветвь закручивалась на 90° усилием 15–20 Н.', torque:'Натяжение: проворот ветви на 90° усилием 15–20 Н' },
+              { n:6, text:'Провернуть коленвал на 2 оборота, убедиться в совпадении меток. Повторно проверить натяжение.' },
+              { n:7, text:'Затянуть болт натяжного ролика динамометрическим ключом.', torque:'Болт натяжного ролика: 34–41 Н·м', parts:[{ oem:'2110-1006240', name:'Ролик натяжной' }] },
+              { n:8, text:'Установить кожух ГРМ и ремень генератора, запустить двигатель, проверить работу.' }
+            ],
+            warnings:[
+              'Проворачивайте коленвал только по часовой стрелке.',
+              'Слабый ремень перескакивает на зуб, перетянутый — гудит и быстро изнашивается.',
+              'При замене ремня проверьте состояние помпы и ролика — ресурс близок к 60 000 км.'
+            ]
+          },
+          ...baseProcedures()
+        ],
+        diagrams:[DIAGRAM_TIMING_8V]
+      }),
+      makeMod({ id:'2114_16', name:'1.6 (ВАЗ-11183), 5-МКПП', body:'Хэтчбек, 5 дверей', years:'2007–2013',
+        engine:{ code:'ВАЗ-11183', desc:'1.6 л, 8V, инжектор', power:81, torque:120 },
+        transmission:'5-МКПП', drive:'Передний',
+        maintenance: stdMaintenance([
+          { op:'Замена ремня ГРМ и натяжного ролика', km:60000, mo:null, type:'replace', critical:true,
+            note:'Интервал 60 000 км. Контроль состояния каждые 15 000 км.' }
+        ]),
+        diagrams:[DIAGRAM_TIMING_8V] })
+    ]},
+    { id:'vaz-2115', name:'ВАЗ-2115', years:'1997–2012', mods:[
+      makeMod({ id:'2115_16', name:'1.6 (ВАЗ-11183), 5-МКПП', body:'Седан', years:'1997–2012',
+        engine:{ code:'ВАЗ-11183', desc:'1.6 л, 8V, инжектор', power:81, torque:120 },
+        transmission:'5-МКПП', drive:'Передний',
+        diagrams:[DIAGRAM_TIMING_8V] })
+    ]}
+  ]
+},
+/* ---------- ДЕСЯТОЕ СЕМЕЙСТВО ---------- */
+{
+  id:'desyatka', name:'Десятое семейство', years:'1995–2012',
+  desc:'ВАЗ-2110, 2111, 2112 — переход на 16-клапанные моторы и новые платформы.',
+  models:[
+    { id:'vaz-2110', name:'ВАЗ-2110', years:'1995–2012', mods:[
+      makeMod({ id:'2110_16v', name:'1.6 16V (ВАЗ-21126), 5-МКПП', body:'Седан', years:'1995–2012',
+        engine:{ code:'ВАЗ-21126', desc:'1.6 л, 16V, инжектор', power:98, torque:145 },
+        transmission:'5-МКПП', drive:'Передний',
+        docs:[
+          { type:'Руководство по ремонту', title:'ВАЗ-2110 — ремонт (VAZbook)', url:'https://www.vazbook.ru/' },
+          { type:'Архив документации', title:'VNX.SU — ВАЗ', url:'https://vnx.su/content/avto/vaz/lada.html' }
+        ],
+        maintenance: stdMaintenance([
+          { op:'Замена ремня ГРМ, роликов и помпы', km:90000, mo:null, type:'replace', critical:true,
+            note:'При обрыве ремня на 16V происходит встреча клапанов с поршнями — ремонт ГБЦ обязателен.' }
+        ]),
+        diagrams:[DIAGRAM_TIMING_16V] })
+    ]},
+    { id:'vaz-2111', name:'ВАЗ-2111', years:'1998–2012', mods:[
+      makeMod({ id:'2111_16v', name:'1.6 16V (ВАЗ-21126), 5-МКПП', body:'Универсал', years:'1998–2012',
+        engine:{ code:'ВАЗ-21126', desc:'1.6 л, 16V, инжектор', power:98, torque:145 },
+        transmission:'5-МКПП', drive:'Передний',
+        diagrams:[DIAGRAM_TIMING_16V] })
+    ]},
+    { id:'vaz-2112', name:'ВАЗ-2112', years:'1999–2008', mods:[
+      makeMod({ id:'2112_16v', name:'1.5 16V (ВАЗ-21120), 5-МКПП', body:'Хэтчбек', years:'1999–2008',
+        engine:{ code:'ВАЗ-21120', desc:'1.5 л, 16V, инжектор', power:93, torque:140 },
+        transmission:'5-МКПП', drive:'Передний',
+        diagrams:[DIAGRAM_TIMING_16V] })
+    ]}
+  ]
+},
+/* ---------- ПРИОРА ---------- */
+{
+  id:'priora', name:'Приора', years:'2007–2018',
+  desc:'Lada Priora (2170/2171/2172): глубокая модернизация десятого семейства.',
+  models:[
+    { id:'priora-2170', name:'Lada Priora 2170', years:'2007–2018', mods:[
+      makeMod({ id:'2170_16v', name:'1.6 16V (ВАЗ-21126), 5-МКПП', body:'Седан', years:'2007–2018',
+        engine:{ code:'ВАЗ-21126', desc:'1.6 л, 16V, инжектор', power:98, torque:145 },
+        transmission:'5-МКПП', drive:'Передний',
+        docs:[
+          { type:'Руководство по ремонту', title:'Lada Priora — руководство (Ladaman)', url:'https://www.ladaman.ru/' },
+          { type:'Архив документации', title:'VNX.SU — Priora', url:'https://vnx.su/content/avto/vaz/lada.html' },
+          { type:'Каталог деталей', title:'LADA-Image — Priora', url:'https://www.lada-image.ru/products/catalog/' }
+        ],
+        maintenance: stdMaintenance([
+          { op:'Замена ремня ГРМ, роликов и помпы', km:60000, mo:48, type:'replace', critical:true,
+            note:'Рекомендуемый интервал: 60 000 км или 4 года. Максимум 80 000–105 000 км, но не более 8 лет. Проверка состояния каждые 15 000 км.' }
+        ]),
+        procedures:[
+          {
+            id:'priora-timing-16v', title:'Замена ремня ГРМ и роликов (16V, ВАЗ-21126)',
+            time:'2–2,5 ч', level:'Сложная',
+            tools:['Ключ 10','Ключ 13','Ключ 17','Ключ 19','Фиксаторы распредвалов','Фиксатор маховика','Динамометрический ключ'],
+            steps:[
+              { n:1, text:'Снять ремень генератора, верхнюю и нижнюю крышки ГРМ, правую опору двигателя.' },
+              { n:2, text:'Выставить ВМТ, зафиксировать распредвалы специальными фиксаторами.' },
+              { n:3, text:'Снять шкив коленвала, ослабить натяжной ролик, снять ремень.', torque:'Болт шкива коленвала: 97,9–108,8 Н·м' },
+              { n:4, text:'Заменить натяжной и обводной ролики, при необходимости — помпу.', parts:[{ oem:'21126-1006230', name:'Ролик натяжной 16V' },{ oem:'2112-1006120', name:'Ролик обводной' },{ oem:'2110-1307010', name:'Помпа' }] },
+              { n:5, text:'Установить новый ремень строго по меткам.', parts:[{ oem:'21126-1006040', name:'Ремень ГРМ 16V' }] },
+              { n:6, text:'Натянуть ремень, провернуть коленвал на 2 оборота, повторно проверить метки.' },
+              { n:7, text:'Затянуть болты роликов и шкива распредвала с нормированными моментами.', torque:'Болт натяжного ролика: 33,2–41,2 Н·м · Шкив распредвала: 67,4–83,3 Н·м' },
+              { n:8, text:'Собрать, запустить двигатель, проверить отсутствие посторонних шумов.' }
+            ],
+            warnings:[
+              'При обрыве ремня на 16V клапаны встречаются с поршнями — обязателен ремонт ГБЦ.',
+              'Использование фиксаторов распредвалов обязательно.',
+              'Болт шкива коленвала — TTY (доворачиваемый): при повторной установке требует замены.'
+            ]
+          },
+          ...baseProcedures()
+        ],
+        diagrams:[DIAGRAM_TIMING_16V] })
+    ]},
+    { id:'priora-2171', name:'Lada Priora 2171', years:'2008–2018', mods:[
+      makeMod({ id:'2171_16v', name:'1.6 16V (ВАЗ-21126), 5-МКПП', body:'Универсал', years:'2008–2018',
+        engine:{ code:'ВАЗ-21126', desc:'1.6 л, 16V, инжектор', power:98, torque:145 },
+        transmission:'5-МКПП', drive:'Передний',
+        diagrams:[DIAGRAM_TIMING_16V] })
+    ]},
+    { id:'priora-2172', name:'Lada Priora 2172', years:'2008–2015', mods:[
+      makeMod({ id:'2172_16v', name:'1.6 16V (ВАЗ-21126), 5-МКПП', body:'Хэтчбек', years:'2008–2015',
+        engine:{ code:'ВАЗ-21126', desc:'1.6 л, 16V, инжектор', power:98, torque:145 },
+        transmission:'5-МКПП', drive:'Передний',
+        diagrams:[DIAGRAM_TIMING_16V] })
+    ]}
+  ]
+},
+/* ---------- КАЛИНА ---------- */
+{
+  id:'kalina', name:'Калина', years:'2004–2018',
+  desc:'Lada Kalina первого и второго поколения: хэтчбеки, универсалы и кросс-версии.',
+  models:[
+    { id:'kalina-1118', name:'Lada Kalina 1118', years:'2004–2013', mods:[
+      makeMod({ id:'1118_16v', name:'1.6 8V (ВАЗ-11183), 5-МКПП', body:'Хэтчбек, 5 дверей', years:'2004–2013',
+        engine:{ code:'ВАЗ-11183', desc:'1.6 л, 8V, инжектор', power:81, torque:120 },
+        transmission:'5-МКПП', drive:'Передний',
+        docs:[
+          { type:'Руководство по ремонту', title:'Lada Kalina 1117/1118/1119 (New-Lada)', url:'https://new-lada.ru/rukovodstvo-po-remontu-i-obsluzhivaniyu-lada-kalina-vaz-1117-vaz-1118-i-vaz-1119-remont-i-tyuning-avtomobiley-avtoportal/' },
+          { type:'Регламент ТО', title:'Таблица ТО-1…ТО-11 для Kalina (avto.tatar)', url:'https://avto.tatar/regulations/1087' },
+          { type:'Каталог деталей', title:'LADA-Image — Kalina', url:'https://www.lada-image.ru/products/catalog/' }
+        ],
+        maintenance: stdMaintenance([
+          { op:'Замена ремня ГРМ и натяжного ролика', km:60000, mo:null, type:'replace', critical:true,
+            note:'Для 8V 11183 регламент — 60 000 км. Контроль каждые 15 000 км.' },
+          { op:'Замена масла в МКПП', km:60000, mo:null, type:'replace', note:'Объём — 3,1 л, GL-4.' }
+        ]),
+        diagrams:[DIAGRAM_TIMING_8V] })
+    ]},
+    { id:'kalina-1119', name:'Lada Kalina 1119', years:'2006–2013', mods:[
+      makeMod({ id:'1119_16v', name:'1.6 16V (ВАЗ-11194), 5-МКПП', body:'Хэтчбек, 5 дверей', years:'2006–2013',
+        engine:{ code:'ВАЗ-11194', desc:'1.6 л, 16V, инжектор', power:89, torque:140 },
+        transmission:'5-МКПП', drive:'Передний',
+        docs:[
+          { type:'Руководство по ремонту', title:'Kalina 1119 (New-Lada)', url:'https://new-lada.ru/rukovodstvo-po-remontu-i-obsluzhivaniyu-lada-kalina-vaz-1117-vaz-1118-i-vaz-1119-remont-i-tyuning-avtomobiley-avtoportal/' },
+          { type:'Регламент ТО', title:'Таблица ТО для Kalina (avto.tatar)', url:'https://avto.tatar/regulations/1087' }
+        ],
+        maintenance: stdMaintenance([
+          { op:'Замена ремня ГРМ, роликов и помпы', km:60000, mo:null, type:'replace', critical:true,
+            note:'16V 11194: при обрыве ремня клапаны встречаются с поршнями. Менять комплектом (ремень + ролики + помпа).' }
+        ]),
+        diagrams:[DIAGRAM_TIMING_16V] })
+    ]},
+    { id:'kalina-2192', name:'Lada Kalina II 2192', years:'2013–2018', mods:[
+      makeMod({ id:'2192_16v', name:'1.6 16V (ВАЗ-21127), 5-МКПП', body:'Хэтчбек', years:'2013–2018',
+        engine:{ code:'ВАЗ-21127', desc:'1.6 л, 16V, инжектор', power:106, torque:148 },
+        transmission:'5-МКПП', drive:'Передний',
+        maintenance: stdMaintenance([
+          { op:'Замена ремня ГРМ и роликов', km:60000, mo:null, type:'replace', critical:true,
+            note:'Для 16V 21127 рекомендуемый интервал — 60 000 км. При обрыве — загиб клапанов.' }
+        ]),
+        diagrams:[DIAGRAM_TIMING_16V] })
+    ]}
+  ]
+},
+/* ---------- ГРАНТА ---------- */
+{
+  id:'granta', name:'Гранта', years:'2011–н.в.',
+  desc:'Lada Granta — самое массовое семейство АвтоВАЗ: седан, лифтбек, хэтчбек. Богатая линейка моторов 8V и 16V.',
+  models:[
+    { id:'granta-2190', name:'Lada Granta 2190 (седан)', years:'2011–н.в.', mods:[
+      makeMod({
+        id:'granta_8v_11182',
+        name:'1.6 8V (ВАЗ-11182), 5-МКПП, 2022–н.в.',
+        body:'Седан (2190)', years:'2022 – н.в.',
+        engine:{ code:'ВАЗ-11182', desc:'1.6 л, 8V, SOHC, инжектор', power:90, torque:143 },
+        transmission:'5-МКПП ВАЗ-2181', drive:'Передний',
+        fluids:[
+          { k:'Моторное масло',        v:'3,2 л (МКПП) / 4,4 л (АКПП)', n:'SAE 5W-40, API SJ/SL и выше (LADA ULTRA 5W-40, арт. 88888L05400400)' },
+          { k:'Трансмиссионное масло', v:'2,8–3,0 л',  n:'GL-4 · 75W-90 / 80W-85' },
+          { k:'Тормозная жидкость',    v:'DOT-4',      n:'Замена каждые 2 года' },
+          { k:'Охлаждающая жидкость',  v:'G12+',       n:'Карбоксилатный антифриз' }
+        ],
+        docs:[
+          { type:'Руководство по ремонту', title:'Lada Granta — онлайн-руководство (Ladaman)', url:'https://www.ladaman.ru/' },
+          { type:'Архив документации', title:'VNX.SU — Granta', url:'https://vnx.su/content/avto/vaz/lada.html' },
+          { type:'Каталог деталей', title:'7zap — Granta', url:'https://7zap.com/ru/catalog/cars/vaz/' },
+          { type:'Каталог оригинальных запчастей', title:'LADA-Image', url:'https://www.lada-image.ru/products/catalog/' }
+        ],
+        maintenance: stdMaintenance([
+          { op:'Замена ремня ГРМ и натяжного ролика', km:45000, mo:null, type:'replace', critical:true,
+            note:'С 09.2022 на 11182 — ремень БРТ «Резинотехника» с ресурсом 45 000 км. Ролик меняется раз в 90 000 км, помпа — каждую вторую замену ремня (80 000–100 000 км).' },
+          { op:'Регулировка зазоров клапанов (первая)', km:90000, mo:null, type:'adjust',
+            note:'Зазоры: впуск 0,25 мм, выпуск 0,40 мм (±0,05). Регулировка подбором толкателей.' },
+          { op:'Замена свечей зажигания', km:30000, mo:null, type:'replace',
+            note:'Момент затяжки: 31–39 Н·м. Зазор: 1,0–1,1 мм.' },
+          { op:'Замена помпы', km:90000, mo:null, type:'replace',
+            note:'Рекомендуется каждую вторую замену ремня ГРМ. Помпа и ролики склонны клинить с последующим обрывом ремня.' }
+        ]),
+        procedures:[
+          {
+            id:'granta-timing-8v', title:'Замена ремня ГРМ (8V, ВАЗ-11182)',
+            time:'1,5–2 ч', level:'Средняя',
+            tools:['Ключ 10','Ключ 13','Ключ 17','Ключ 19','Фиксатор маховика','Динамометрический ключ','Монтажная лопатка'],
+            steps:[
+              { n:1, text:'Снять ремень привода генератора и верхний кожух ГРМ.' },
+              { n:2, text:'Выставить ВМТ по меткам коленчатого и распределительного валов, зафиксировать маховик.' },
+              { n:3, text:'Ослабить натяжной ролик и снять старый ремень.' },
+              { n:4, text:'Установить новый ремень ГРМ и натяжной ролик, отрегулировать натяжение.', parts:[{ oem:'2110-1006040', name:'Ремень ГРМ 8V' }] },
+              { n:5, text:'Провернуть коленвал на 2 оборота, проверить совпадение меток.' },
+              { n:6, text:'Затянуть болт натяжного ролика динамометрическим ключом.', torque:'Болт натяжного ролика: 34–41 Н·м', parts:[{ oem:'2110-1006240', name:'Ролик натяжной' }] },
+              { n:7, text:'Проверить состояние помпы — при люфте или подтёках заменить одновременно с ремнём.', parts:[{ oem:'2110-1307010', name:'Помпа' }] },
+              { n:8, text:'Установить кожух и ремень генератора, запустить двигатель.' }
+            ],
+            warnings:[
+              'Для 11182 (с 09.2022) превышение интервала 45 000 км резко повышает риск обрыва ремня. Зафиксированы случаи обрыва на 19 000–30 000 км.',
+              '11182 конструктивно исключает контакт клапанов с поршнями — даже при обрыве ремня клапаны не гнёт.',
+              'Проворачивать коленвал только по часовой стрелке.'
+            ]
+          },
+          {
+            id:'granta-valves-11182', title:'Регулировка зазоров клапанов (8V, ВАЗ-11182)',
+            time:'2–3 ч', level:'Сложная',
+            tools:['Ключ 10','Ключ 13','Набор щупов','Съёмник толкателей','Микрометр','Прокладка клапанной крышки'],
+            steps:[
+              { n:1, text:'Снять клапанную крышку, очистить поверхность.' },
+              { n:2, text:'Выставить ВМТ такта сжатия 1-го цилиндра.' },
+              { n:3, text:'Замерить зазоры щупом: впуск — 0,25 мм, выпуск — 0,40 мм (допуск ±0,05).', torque:'Зазор: впуск 0,25 мм · выпуск 0,40 мм (±0,05)' },
+              { n:4, text:'При несоответствии — снять толкатель съёмником, замерить толщину, подобрать новый.' },
+              { n:5, text:'Установить толкатели, проверить зазоры повторно.' },
+              { n:6, text:'Установить новую прокладку клапанной крышки, собрать, запустить двигатель.' }
+            ],
+            warnings:[
+              'Первая регулировка по регламенту — на 90 000 км, далее каждые 30 000–50 000 км.',
+              'На 11182 стоят толкатели (не гидрокомпенсаторы) — при неподходящей вязкости масла зазоры «уходят» быстрее.',
+              'Замерять зазоры только на холодном двигателе.'
+            ]
+          },
+          {
+            id:'granta-head-11182', title:'Затяжка болтов ГБЦ (8V, ВАЗ-11182)',
+            time:'1–1,5 ч', level:'Сложная',
+            tools:['Динамометрический ключ 10–150 Н·м','Угломер','Головка E14','Новые болты ГБЦ'],
+            steps:[
+              { n:1, text:'Очистить резьбовые отверстия и болты от масла и грязи. Использовать только новые болты ГБЦ.', torque:'Болты ГБЦ — одноразовые (TTY)' },
+              { n:2, text:'1-й этап: затянуть все болты предварительным моментом.', torque:'1-й этап: 12–20 Н·м' },
+              { n:3, text:'2-й этап: затянуть все болты основным моментом в последовательности от центра к краям.', torque:'2-й этап: 26–34 Н·м' },
+              { n:4, text:'3-й этап: довернуть все болты на заданный угол.', torque:'3-й этап: доворот 90°' },
+              { n:5, text:'Проверить момент затяжки через 1 000 км пробега (контрольная проверка).' }
+            ],
+            warnings:[
+              'Последовательность затяжки — строго от центра к периферии («спираль»).',
+              'Повторное использование болтов ГБЦ запрещено — они вытягиваются при затяжке.',
+              'Перед установкой проверить длину болтов и состояние резьбы.'
+            ]
+          },
+          {
+            id:'granta-rear-hub', title:'Затяжка гаек ступицы и элементов задней подвески',
+            time:'30–40 мин', level:'Средняя',
+            tools:['Динамометрический ключ до 250 Н·м','Головка 30 мм','Ключ 17','Ключ 19'],
+            steps:[
+              { n:1, text:'Гайка подшипника ступицы заднего колеса (M20×1,5): затянуть. Гайка одноразовая.', torque:'Гайка ступицы задней: 186,3–225,6 Н·м' },
+              { n:2, text:'Болты крепления балки задней подвески к кузову: затянуть.', torque:'Балка к кузову: 65–95 Н·м' },
+              { n:3, text:'Гайка нижнего крепления амортизатора к балке: затянуть.', torque:'Амортизатор к балке: 68–84 Н·м' },
+              { n:4, text:'Гайка крепления балки к кронштейну кузова: затянуть.', torque:'Балка к кронштейну: 68–84 Н·м' },
+              { n:5, text:'Болты крепления колеса: затянуть крест-накрест.', torque:'Колесо: 105 Н·м' }
+            ],
+            warnings:[
+              'Ступичная гайка заднего колеса — самоконтрящаяся, при откручивании заменяется новой.',
+              'С 2024 г. АвтоВАЗ проводит сервисную кампанию по замене гаек задней ступицы на новый артикул с моментом 21 Н·м (для отдельных партий) — уточняйте по VIN.',
+              'Затягивать соединения подвески только на стоящем на колёсах автомобиле (под нагрузкой).'
+            ]
+          },
+          ...baseProcedures()
+        ],
+        diagrams:[DIAGRAM_TIMING_8V, DIAGRAM_BRAKES]
+      }),
+      makeMod({
+        id:'granta_8v_11186',
+        name:'1.6 8V (ВАЗ-11186), 5-МКПП, 2011–2022',
+        body:'Седан (2190)', years:'2011–2022',
+        engine:{ code:'ВАЗ-11186', desc:'1.6 л, 8V, инжектор', power:87, torque:140 },
+        transmission:'5-МКПП ВАЗ-2180', drive:'Передний',
+        maintenance: stdMaintenance([
+          { op:'Замена ремня ГРМ и натяжного ролика', km:90000, mo:null, type:'replace', critical:true,
+            note:'Для 11186 с ремнём Gates заводской интервал — 90 000 км (в части сервисных книжек до 2019 г. — 180 000 км вместе с роликом и помпой). Версии после середины 2018 г. получили поршни с проточками.' }
+        ]),
+        diagrams:[DIAGRAM_TIMING_8V]
+      }),
+      makeMod({
+        id:'granta_16v_21127',
+        name:'1.6 16V (ВАЗ-21127), 5-МКПП / 4-АКПП, 2013–н.в.',
+        body:'Седан (2190)', years:'2013 – н.в.',
+        engine:{ code:'ВАЗ-21127', desc:'1.6 л, 16V, DOHC, инжектор', power:106, torque:148 },
+        transmission:'5-МКПП ВАЗ-2181 / 4-АКПП Jatco', drive:'Передний',
+        fluids:[
+          { k:'Моторное масло',        v:'4,4 л (АКПП) / 3,5 л (МКПП)', n:'API SL и выше · 5W-30 / 5W-40' },
+          { k:'Масло АКПП Jatco',      v:'по щупу',                      n:'ATF NS-2 / NS-3, частичная замена каждые 60 000 км' },
+          { k:'Тормозная жидкость',    v:'DOT-4',                        n:'Замена каждые 2 года' }
+        ],
+        maintenance: stdMaintenance([
+          { op:'Замена ремня ГРМ и роликов', km:60000, mo:null, type:'replace', critical:true,
+            note:'Для 16V 21126/21127 позиции «замена на 45 000» нет. Рекомендуемый интервал — 60 000 км. При обрыве на моторах до середины 2018 г. клапан встречается с поршнем на 99%.' },
+          { op:'Замена свечей зажигания', km:30000, mo:null, type:'replace',
+            note:'Момент затяжки свечи: 30,7–39,0 Н·м. Зазор: 1,0–1,1 мм.' }
+        ]),
+        procedures:[
+          {
+            id:'granta-timing-16v', title:'Замена ремня ГРМ и роликов (16V, ВАЗ-21127)',
+            time:'2–2,5 ч', level:'Сложная',
+            tools:['Ключ 10','Ключ 13','Ключ 17','Ключ 19','Фиксаторы распредвалов','Фиксатор маховика','Динамометрический ключ'],
+            steps:[
+              { n:1, text:'Снять ремень генератора, верхнюю и нижнюю крышки ГРМ, правую опору двигателя.' },
+              { n:2, text:'Выставить ВМТ, зафиксировать распредвалы фиксаторами.' },
+              { n:3, text:'Снять шкив коленвала, ослабить натяжной ролик, снять ремень.', torque:'Болт шкива коленвала: 97,9–108,8 Н·м' },
+              { n:4, text:'Заменить натяжной и обводной ролики, при необходимости — помпу.', parts:[{ oem:'21126-1006230', name:'Ролик натяжной 16V' },{ oem:'2112-1006120', name:'Ролик обводной' },{ oem:'2110-1307010', name:'Помпа' }] },
+              { n:5, text:'Установить новый ремень строго по меткам.', parts:[{ oem:'21126-1006040', name:'Ремень ГРМ 16V' }] },
+              { n:6, text:'Натянуть ремень, провернуть коленвал на 2 оборота, повторно проверить метки.' },
+              { n:7, text:'Затянуть болты роликов и шкива с нормированным моментом.', torque:'Болт натяжного ролика: 33,2–41,2 Н·м · Болт шкива: 97,9–108,8 Н·м' },
+              { n:8, text:'Собрать, запустить двигатель, проверить отсутствие посторонних шумов.' }
+            ],
+            warnings:[
+              'При обрыве ремня на 16V до середины 2018 г. клапаны встречаются с поршнями.',
+              'После середины 2018 г. на 21126/21127 начали ставить поршни с проточками.',
+              'Использование фиксаторов распредвалов обязательно.'
+            ]
+          },
+          {
+            id:'granta-head-21127', title:'Затяжка болтов ГБЦ (16V, ВАЗ-21126/21127)',
+            time:'1,5–2 ч', level:'Сложная',
+            tools:['Динамометрический ключ 10–150 Н·м','Угломер','Головка E14','Новые болты ГБЦ'],
+            steps:[
+              { n:1, text:'Очистить резьбовые отверстия. Использовать только новые болты ГБЦ.', torque:'Болты ГБЦ — одноразовые (TTY)' },
+              { n:2, text:'1-й этап: предварительная затяжка всех 10 болтов.', torque:'1-й этап: 20–25 Н·м' },
+              { n:3, text:'2-й этап: основная затяжка в последовательности от центра к краям.', torque:'2-й этап: 69–86 Н·м' },
+              { n:4, text:'3-й этап: доворот на угол.', torque:'3-й этап: доворот 90° ± 5°' },
+              { n:5, text:'Контрольная проверка момента через 1 000 км.' }
+            ],
+            warnings:[
+              'Строго соблюдать последовательность затяжки — нарушение ведёт к деформации ГБЦ.',
+              'Проверять длину болтов перед установкой: для 21129 — макс. 95 мм, для 21179 — макс. 107 мм.'
+            ]
+          },
+          ...baseProcedures()
+        ],
+        diagrams:[DIAGRAM_TIMING_16V, DIAGRAM_BRAKES]
+      })
+    ]},
+    { id:'granta-2191', name:'Lada Granta 2191 (лифтбек)', years:'2014–н.в.', mods:[
+      makeMod({ id:'granta_2191_16v', name:'1.6 16V (ВАЗ-21127), 5-МКПП', body:'Лифтбек (2191)', years:'2014–н.в.',
+        engine:{ code:'ВАЗ-21127', desc:'1.6 л, 16V, инжектор', power:106, torque:148 },
+        transmission:'5-МКПП', drive:'Передний',
+        diagrams:[DIAGRAM_TIMING_16V] })
+    ]},
+    { id:'granta-2192', name:'Lada Granta 2192 (хэтчбек)', years:'2018–н.в.', mods:[
+      makeMod({ id:'granta_2192_8v', name:'1.6 8V (ВАЗ-11182), 5-МКПП', body:'Хэтчбек (2192)', years:'2018–н.в.',
+        engine:{ code:'ВАЗ-11182', desc:'1.6 л, 8V, инжектор', power:90, torque:143 },
+        transmission:'5-МКПП', drive:'Передний',
+        maintenance: stdMaintenance([
+          { op:'Замена ремня ГРМ и натяжного ролика', km:45000, mo:null, type:'replace', critical:true,
+            note:'Мотор 11182 с ремнём БРТ — интервал 45 000 км.' }
+        ]),
+        diagrams:[DIAGRAM_TIMING_8V] })
+    ]}
+  ]
+},
+/* ---------- ВЕСТА ---------- */
+{
+  id:'vesta', name:'Веста', years:'2015–н.в.',
+  desc:'Lada Vesta — новое поколение на платформе Lada B/C: седан, универсал SW, кросс-версии.',
+  models:[
+    { id:'vesta-2180', name:'Lada Vesta 2180', years:'2015–н.в.', mods:[
+      makeMod({ id:'vesta_16v_21129', name:'1.6 16V (ВАЗ-21129), 5-МКПП / CVT', body:'Седан', years:'2015–н.в.',
+        engine:{ code:'ВАЗ-21129', desc:'1.6 л, 16V, инжектор', power:106, torque:148 },
+        transmission:'5-МКПП / вариатор', drive:'Передний',
+        fluids:[
+          { k:'Моторное масло',        v:'3,5–3,7 л', n:'5W-30 / 5W-40, API SL/SM/SN' },
+          { k:'Масло МКПП',           v:'по уровень', n:'GL-4 (не GL-5!), замена на 45 000 км или 3 года' },
+          { k:'Жидкость вариатора CVT', v:'по щупу',  n:'Только Nissan NS-3, каждые 45 000 км или 3 года' },
+          { k:'Тормозная жидкость',    v:'DOT-4',      n:'Замена каждые 2 года' }
+        ],
+        docs:[
+          { type:'Руководство по ремонту', title:'Lada Vesta — сборник инструкций (SW-Cross)', url:'https://sw-cross.ru/' },
+          { type:'Архив документации', title:'VNX.SU — Vesta, Granta, Largus', url:'https://vnx.su/content/avto/vaz/lada.html' },
+          { type:'Онлайн-руководство', title:'Ladaman — Vesta', url:'https://www.ladaman.ru/' },
+          { type:'Каталог деталей', title:'LADA-Image — Vesta', url:'https://www.lada-image.ru/products/catalog/' }
+        ],
+        maintenance: stdMaintenance([
+          { op:'Замена ремня ГРМ, роликов и помпы', km:90000, mo:48, type:'replace', critical:true,
+            note:'Для 21129 и 21179: 90 000 км или раз в 4 года (что наступит раньше). Проверка каждые 30 000 км.' },
+          { op:'Замена воздушного фильтра', km:20000, mo:null, type:'replace' },
+          { op:'Замена салонного фильтра',  km:15000, mo:12, type:'replace' },
+          { op:'Замена свечей зажигания',   km:60000, mo:null, type:'replace',
+            note:'Момент затяжки: 20–25 Н·м.' },
+          { op:'Замена масла в МКПП', km:45000, mo:36, type:'replace',
+            note:'Только GL-4 / GL-4+. Масло GL-5 разрушает синхронизаторы.' },
+          { op:'Замена жидкости в вариаторе', km:45000, mo:36, type:'replace',
+            note:'Только Nissan NS-3.' }
+        ]),
+        procedures:[
+          {
+            id:'vesta-timing-16v', title:'Замена ремня ГРМ и роликов (16V, ВАЗ-21129)',
+            time:'2–2,5 ч', level:'Сложная',
+            tools:['Ключ 10','Ключ 13','Ключ 17','Ключ 19','Фиксаторы распредвалов','Фиксатор маховика','Динамометрический ключ'],
+            steps:[
+              { n:1, text:'Снять ремень генератора, верхнюю и нижнюю крышки ГРМ, правую опору двигателя.' },
+              { n:2, text:'Выставить ВМТ, зафиксировать распредвалы специальными фиксаторами.' },
+              { n:3, text:'Снять шкив коленвала, ослабить натяжной ролик, снять ремень.', torque:'Болт шкива коленвала: 95–115 Н·м' },
+              { n:4, text:'Заменить натяжной и обводной ролики, при необходимости — помпу.', parts:[{ oem:'21126-1006230', name:'Ролик натяжной 16V' },{ oem:'2112-1006120', name:'Ролик обводной' },{ oem:'2110-1307010', name:'Помпа' }] },
+              { n:5, text:'Установить новый ремень строго по меткам.', parts:[{ oem:'21126-1006040', name:'Ремень ГРМ 16V' }] },
+              { n:6, text:'Натянуть ремень, провернуть коленвал на 2 оборота, повторно проверить метки.' },
+              { n:7, text:'Затянуть болты роликов и шкива.', torque:'Болт натяжного ролика: 30–36 Н·м · Шкив распредвала: 70–83 Н·м · Шкив коленвала: 95–115 Н·м' },
+              { n:8, text:'Собрать, запустить двигатель, проверить отсутствие посторонних шумов.' }
+            ],
+            warnings:[
+              'При обрыве ремня на 16V клапаны встречаются с поршнями — обязателен ремонт ГБЦ.',
+              'Использование фиксаторов распредвалов обязательно.',
+              'Болт ГБЦ — TTY: затяжка в 3 этапа (20–25 Н·м → +90° → +90°).'
+            ]
+          },
+          {
+            id:'vesta-head-21129', title:'Затяжка болтов ГБЦ (16V, ВАЗ-21129)',
+            time:'1,5–2 ч', level:'Сложная',
+            tools:['Динамометрический ключ 10–150 Н·м','Угломер','Головка E14','Новые болты ГБЦ (длина 93 мм)'],
+            steps:[
+              { n:1, text:'Очистить резьбовые отверстия. Проверить длину новых болтов (93 мм).', torque:'Длина болта: 93 мм' },
+              { n:2, text:'1-й этап: предварительная затяжка всех болтов.', torque:'1-й этап: 20–25 Н·м' },
+              { n:3, text:'2-й этап: основная затяжка в последовательности от центра к краям.', torque:'2-й этап: 69–86 Н·м' },
+              { n:4, text:'3-й этап: доворот на угол.', torque:'3-й этап: 90° ± 5°' },
+              { n:5, text:'Контрольная проверка момента через 1 000 км.' }
+            ],
+            warnings:[
+              'Для двигателя 21179 (1.8 л) моменты отличаются: 1-й этап 30–35 Н·м, 2-й этап 90–110 Н·м, 3-й этап 90° ± 3°.',
+              'Болты 21179 — усиленные, M10×1.25, длина 105 мм. Повторное использование запрещено при длине >107 мм.',
+              'Нарушение последовательности затяжки ведёт к деформации алюминиевой ГБЦ.'
+            ]
+          },
+          {
+            id:'vesta-hub', title:'Затяжка ступичных гаек и элементов подвески (Vesta)',
+            time:'40–50 мин', level:'Средняя',
+            tools:['Динамометрический ключ до 300 Н·м','Головка 30 мм','Ключ 18','Ключ 21','Съёмник шаровой опоры'],
+            steps:[
+              { n:1, text:'Гайка подшипника ступицы переднего колеса (M20×1,5): затянуть. Гайка одноразовая.', torque:'Гайка ступицы передней: 226–247 Н·м' },
+              { n:2, text:'Гайка подшипника ступицы заднего колеса: затянуть.', torque:'Гайка ступицы задней: 250 Н·м' },
+              { n:3, text:'Гайки крепления стойки стабилизатора: затянуть.', torque:'Стойка стабилизатора: 20 Н·м' },
+              { n:4, text:'Гайка стяжного болта шаровой опоры: затянуть.', torque:'Шаровая опора: 62 Н·м' },
+              { n:5, text:'Болт крепления колеса: затянуть крест-накрест.', torque:'Колесо: 105 Н·м' }
+            ],
+            warnings:[
+              'Ступичные гайки — одноразовые (самоконтрящиеся). При откручивании заменяются новыми.',
+              'Затяжка ступичной гайки на стоящем автомобиле (нагрузка на подшипник) недопустима.',
+              'После затяжки проверить люфт подшипника и отсутствие гула при движении.'
+            ]
+          },
+          {
+            id:'vesta-cvt-oil', title:'Замена масла в вариаторе (CVT Jatco JF015E)',
+            time:'1–1,5 ч', level:'Средняя',
+            tools:['Ключ 17','Ключ 19','Шестигранник 8 мм','Ёмкость 5 л','Шприц для заправки','Сканер OBD-II'],
+            steps:[
+              { n:1, text:'Прогреть вариатор (проехать 10–15 км), установить автомобиль на подъёмник.' },
+              { n:2, text:'Открутить заливную пробку (сначала!), затем сливную. Слить старое масло.', torque:'Пробки КПП: 30–35 Н·м' },
+              { n:3, text:'Заменить фильтр вариатора (при наличии), очистить магниты поддона.' },
+              { n:4, text:'Залить только Nissan NS-3 до уровня по щупу / краю заливного отверстия.' },
+              { n:5, text:'Запустить двигатель, прогреть вариатор, проверить уровень и отсутствие течей.' },
+              { n:6, text:'Сбросить адаптации CVT сканером, выполнить пробную поездку.' }
+            ],
+            warnings:[
+              'Только NS-3: другое масло приводит к проскальзыванию ремня и выходу CVT из строя.',
+              'Всегда сначала откручивайте заливную пробку.',
+              'Перетяжка пробок КПП повреждает резьбу — используйте динамометрический ключ.'
+            ]
+          },
+          ...baseProcedures()
+        ],
+        diagrams:[DIAGRAM_TIMING_16V, DIAGRAM_BRAKES] })
+    ]},
+    { id:'vesta-sw', name:'Lada Vesta SW', years:'2017–н.в.', mods:[
+      makeMod({ id:'vesta_sw_18', name:'1.8 16V (ВАЗ-21179), 5-МКПП / CVT', body:'Универсал SW', years:'2017–н.в.',
+        engine:{ code:'ВАЗ-21179', desc:'1.8 л, 16V, инжектор', power:122, torque:170 },
+        transmission:'5-МКПП / вариатор', drive:'Передний',
+        maintenance: stdMaintenance([
+          { op:'Замена ремня ГРМ и роликов', km:90000, mo:48, type:'replace', critical:true,
+            note:'Для 21179 — 90 000 км или 4 года. При обрыве — загиб клапанов.' }
+        ]),
+        diagrams:[DIAGRAM_TIMING_16V] })
+    ]},
+    { id:'vesta-sw-cross', name:'Lada Vesta SW Cross', years:'2017–н.в.', mods:[
+      makeMod({ id:'vesta_cross_18', name:'1.8 16V (ВАЗ-21179), 5-МКПП', body:'Кросс-универсал', years:'2017–н.в.',
+        engine:{ code:'ВАЗ-21179', desc:'1.8 л, 16V, инжектор', power:122, torque:170 },
+        transmission:'5-МКПП', drive:'Передний',
+        diagrams:[DIAGRAM_TIMING_16V] })
+    ]}
+  ]
+},
+/* ---------- ЛАРГУС ---------- */
+{
+  id:'largus', name:'Ларгус', years:'2012–н.в.',
+  desc:'Lada Largus — универсалы и фургоны на платформе Renault Logan MCV.',
+  models:[
+    { id:'largus-r90', name:'Lada Largus R90', years:'2012–н.в.', mods:[
+      makeMod({ id:'largus_16v', name:'1.6 16V (K4M), 5-МКПП', body:'Универсал (5/7 мест)', years:'2012–н.в.',
+        engine:{ code:'K4M', desc:'1.6 л, 16V, инжектор', power:105, torque:148 },
+        transmission:'5-МКПП', drive:'Передний',
+        docs:[
+          { type:'Руководство по ремонту', title:'Lada Largus — онлайн-руководство (Ladaman)', url:'https://www.ladaman.ru/' },
+          { type:'Архив документации', title:'VNX.SU — Largus', url:'https://vnx.su/content/avto/vaz/lada.html' }
+        ],
+        maintenance: stdMaintenance([
+          { op:'Замена ремня ГРМ, роликов и помпы (комплектом)', km:60000, mo:48, type:'replace', critical:true,
+            note:'K4M: 60 000 км или 4 года. Менять только комплектом (ремень + ролики + помпа). При обрыве — загиб клапанов и капремонт.' },
+          { op:'Замена масла в МКПП', km:60000, mo:null, type:'replace',
+            note:'Объём: 4,8 л (сухая замена). Проверять уровень каждые 15 000 км.' },
+          { op:'Замена стоек стабилизатора', km:40000, mo:null, type:'check',
+            note:'Типичная неисправность: стук на неровностях уже к 30 000–40 000 км.' }
+        ]),
+        procedures:[
+          {
+            id:'largus-timing-16v', title:'Замена ремня ГРМ (16V, K4M)',
+            time:'2–3 ч', level:'Сложная',
+            tools:['Ключ 10','Ключ 13','Ключ 16','Шестигранник 6 мм','Динамометрический ключ','Фиксаторы распредвалов','Съёмник шкива коленвала'],
+            steps:[
+              { n:1, text:'Снять ремень генератора, крышки ГРМ, опору двигателя.' },
+              { n:2, text:'Выставить ВМТ, зафиксировать распредвалы и коленвал.' },
+              { n:3, text:'Снять шкив коленвала, ослабить натяжной ролик, снять ремень.' },
+              { n:4, text:'Заменить ремень, натяжной и обводной ролики, при необходимости — помпу (комплектом).' },
+              { n:5, text:'Натянуть ремень, затянуть болт натяжного ролика.', torque:'Болт натяжного ролика: 27 Н·м (M8) / 50 Н·м (M10) · Болт шкива коленвала: 40 Н·м + 115°±15°' },
+              { n:6, text:'Провернуть коленвал на 2 оборота, проверить метки, собрать.' }
+            ],
+            warnings:[
+              'Менять только комплектом: старые ролики могут заклинить через 10 000–20 000 км после замены только ремня.',
+              'Момент затяжки болта натяжного ролика критичен.',
+              'Болт шкива коленвала — TTY (доворачиваемый): при повторной установке требует замены.'
+            ]
+          },
+          {
+            id:'largus-head-k4m', title:'Затяжка болтов ГБЦ и шатунов (16V, K4M)',
+            time:'2–3 ч', level:'Сложная',
+            tools:['Динамометрический ключ 10–150 Н·м','Угломер','Головка E14','Новые болты ГБЦ','Новые гайки шатунов'],
+            steps:[
+              { n:1, text:'Болты ГБЦ: 1-й этап — предварительная затяжка всех болтов.', torque:'1-й этап: 20 Н·м' },
+              { n:2, text:'2-й этап: доворот в последовательности от центра к краям.', torque:'2-й этап: доворот 234–246° (≈ 240°)' },
+              { n:3, text:'Гайки шпилек крышек шатунов: 1-й этап — предварительная затяжка.', torque:'Шатуны, 1-й этап: 20 Н·м' },
+              { n:4, text:'2-й этап: доворот гаек шатунов.', torque:'Шатуны, 2-й этап: 39–51° (или 45° ± 5°)' },
+              { n:5, text:'Болты маховика: затянуть нормированным моментом.', torque:'Маховик: 55 Н·м' }
+            ],
+            warnings:[
+              'Болты ГБЦ K4M — TTY: доворачиваются на угол, а не затягиваются моментом. Использовать угломер обязательно.',
+              'Гайки шатунов — также доворачиваемые.',
+              'Точные углы могут незначительно отличаться по годам — сверяйтесь с сервисной книжкой.'
+            ]
+          },
+          ...baseProcedures()
+        ],
+        diagrams:[] })
+    ]},
+    { id:'largus-cross', name:'Lada Largus Cross', years:'2017–н.в.', mods:[
+      makeMod({ id:'largus_cross_16v', name:'1.6 16V (K4M), 5-МКПП', body:'Кросс-универсал', years:'2017–н.в.',
+        engine:{ code:'K4M', desc:'1.6 л, 16V, инжектор', power:105, torque:148 },
+        transmission:'5-МКПП', drive:'Передний',
+        diagrams:[] })
+    ]},
+    { id:'largus-van', name:'Lada Largus фургон', years:'2012–н.в.', mods:[
+      makeMod({ id:'largus_van_8v', name:'1.6 8V (K7M), 5-МКПП', body:'Фургон', years:'2012–н.в.',
+        engine:{ code:'K7M', desc:'1.6 л, 8V, инжектор', power:84, torque:124 },
+        transmission:'5-МКПП', drive:'Передний',
+        maintenance: stdMaintenance([
+          { op:'Замена ремня ГРМ', km:60000, mo:null, type:'replace', critical:true,
+            note:'K7M 8V: при обрыве ремня клапаны не гнёт (в отличие от K4M), но автомобиль обездвиживается.' }
+        ]),
+        diagrams:[] })
+    ]}
+  ]
+},
+/* ---------- НИВА ---------- */
+{
+  id:'niva', name:'Нива', years:'1977–н.в.',
+  desc:'Lada 4x4 «Легенда», Lada 4x4 5-дверная и Lada Niva Travel — постоянный полный привод.',
+  models:[
+    { id:'niva-2121', name:'Lada 4x4 2121 «Легенда»', years:'1977–н.в.', mods:[
+      makeMod({ id:'2121_17', name:'1.7 (ВАЗ-21214), 5-МКПП', body:'Внедорожник, 3 двери', years:'1977–н.в.',
+        engine:{ code:'ВАЗ-21214', desc:'1.7 л, 8V, инжектор', power:83, torque:129 },
+        transmission:'5-МКПП + раздаточная коробка', drive:'Постоянный полный',
+        fluids:[
+          { k:'Моторное масло',        v:'3,75 л', n:'5W-30 / 5W-40, API SG/SH и выше' },
+          { k:'Масло КПП',            v:'1,6 л',  n:'GL-4, 75W-90' },
+          { k:'Масло раздаточной коробки', v:'0,79 л', n:'GL-5, 75W-90 / 80W-90' },
+          { k:'Масло переднего моста', v:'1,15 л', n:'GL-5, 75W-90' },
+          { k:'Масло заднего моста',   v:'1,3 л',  n:'GL-5, 75W-90' }
+        ],
+        docs:[
+          { type:'Руководство по ремонту', title:'Нива 21213/21214 (VAZbook)', url:'https://www.vazbook.ru/' },
+          { type:'Руководство (Niva Club)', title:'Niva Club — загрузки', url:'https://www.niva-club.net/' },
+          { type:'Каталог деталей', title:'7zap — ВАЗ / LADA', url:'https://7zap.com/ru/catalog/cars/vaz/' }
+        ],
+        maintenance: stdMaintenance([
+          { op:'Замена масла в КПП, раздатке и мостах (ТО-0)', km:2500, mo:null, type:'replace',
+            note:'Первая замена на 2 000–3 000 км. Далее — каждые 30 000–45 000 км.' },
+          { op:'Замена масла в двигателе', km:10000, mo:12, type:'replace',
+            note:'Регламент — каждые 10 000 км или раз в год.' },
+          { op:'Замена ремня ГРМ', km:60000, mo:null, type:'replace', critical:true,
+            note:'8V 21214: обрыв не приводит к встрече клапанов, но обездвиживает автомобиль.' }
+        ]),
+        procedures:[
+          {
+            id:'niva-transmission-oil', title:'Замена масла в КПП, раздатке и мостах (Нива 21214)',
+            time:'1,5–2 ч', level:'Средняя',
+            tools:['Ключ 17','Ключ 12 (квадрат)','Шестигранник 12 мм','Ёмкость 5 л','Шприц для заправки','Динамометрический ключ'],
+            steps:[
+              { n:1, text:'Прогреть трансмиссию (проехать 10–15 км), установить автомобиль на подъёмник.' },
+              { n:2, text:'Очистить пробки КПП, раздатки и мостов от грязи.' },
+              { n:3, text:'Отвернуть сливные пробки, слить масло (КПП 1,6 л, раздатка 0,79 л, передний мост 1,15 л, задний 1,3 л).', torque:'Объёмы: КПП 1,6 л · раздатка 0,79 л · передний мост 1,15 л · задний мост 1,3 л' },
+              { n:4, text:'Осмотреть магниты пробок: мелкая «серебрянка» допустима, крупная стружка — признак износа.' },
+              { n:5, text:'Завернуть сливные пробки с новыми уплотнительными шайбами.' },
+              { n:6, text:'Залить свежее масло шприцем до нижней кромки заливного отверстия.' },
+              { n:7, text:'Затянуть заливные пробки, проверить отсутствие течей после пробной поездки.' }
+            ],
+            warnings:[
+              'Не перепутайте масла: в КПП — GL-4, в раздатку и мосты — GL-5. GL-5 в КПП ускоряет износ синхронизаторов.',
+              'Пробки могут «закисать» — обработайте проникающей смазкой заранее.',
+              'Уровень в раздатке проверяйте на ровной площадке: недолив ведёт к гулу и износу подшипников.'
+            ]
+          },
+          {
+            id:'niva-driveline-torque', title:'Моменты затяжки карданных валов и фланцев (Нива 21214)',
+            time:'30–40 мин', level:'Средняя',
+            tools:['Динамометрический ключ до 200 Н·м','Ключ 13','Ключ 17','Ключ 19'],
+            steps:[
+              { n:1, text:'Гайка крепления фланца карданного вала к ведущему валу и к валам привода мостов: затянуть.', torque:'Гайка фланца кардана: 96,0–117,6 Н·м (M16×1,5)' },
+              { n:2, text:'Гайки фланцев валов раздаточной коробки: затянуть.', torque:'Фланцы раздатки: 22–32 Н·м' },
+              { n:3, text:'Гайка крепления кронштейна подвески к кузову: затянуть.', torque:'Кронштейн подвески к кузову: 15,0–18,6 Н·м (M8)' },
+              { n:4, text:'Гайка ведущей шестерни заднего моста: затянуть с контролем момента сопротивления вращению.', torque:'Ведущая шестерня: 118–255 Н·м' },
+              { n:5, text:'Гайка крепления заднего моста к подвеске: затянуть.', torque:'Задний мост: 83,3–102,9 Н·м' }
+            ],
+            warnings:[
+              'Гайку ведущей шестерни затягивать только с контролем момента сопротивления вращению динамометром.',
+              'Карданные болты и гайки — ответственные соединения: используйте новые самоконтрящиеся гайки.',
+              'После затяжки проверить отсутствие люфтов и вибраций на ходу.'
+            ]
+          },
+          ...baseProcedures()
+        ],
+        diagrams:[DIAGRAM_TIMING_8V] })
+    ]},
+    { id:'niva-2131', name:'Lada 4x4 2131 (5 дверей)', years:'1995–н.в.', mods:[
+      makeMod({ id:'2131_17', name:'1.7 (ВАЗ-21214), 5-МКПП', body:'Внедорожник, 5 дверей', years:'1995–н.в.',
+        engine:{ code:'ВАЗ-21214', desc:'1.7 л, 8V, инжектор', power:83, torque:129 },
+        transmission:'5-МКПП + раздаточная коробка', drive:'Постоянный полный',
+        diagrams:[DIAGRAM_TIMING_8V] })
+    ]},
+    { id:'niva-travel', name:'Lada Niva Travel 2123', years:'2002–н.в.', mods:[
+      makeMod({ id:'2123_17', name:'1.7 (ВАЗ-21214), 5-МКПП', body:'Внедорожник, 5 дверей', years:'2002–н.в.',
+        engine:{ code:'ВАЗ-21214', desc:'1.7 л, 8V, инжектор', power:80, torque:127 },
+        transmission:'5-МКПП + раздаточная коробка', drive:'Постоянный полный',
+        docs:[
+          { type:'Руководство (Chevrolet Niva)', title:'ВАЗ 2123 / Chevrolet Niva — эксплуатация, ТО, ремонт (Niva Club)', url:'https://www.niva-club.net/' },
+          { type:'Руководство (Lada Niva Travel)', title:'Руководство по ремонту ВАЗ 2123 (Niva Club)', url:'https://www.niva-club.net/' },
+          { type:'Каталог деталей', title:'7zap — Niva Travel', url:'https://7zap.com/ru/catalog/cars/vaz/' }
+        ],
+        procedures:[
+          {
+            id:'niva-travel-brakes', title:'Замена передних тормозных колодок (Niva Travel 2123)',
+            time:'40–60 мин', level:'Средняя',
+            tools:['Ключ 13','Ключ 17','Шестигранник 7 мм','Струбцина','Очиститель тормозов','Динамометрический ключ'],
+            steps:[
+              { n:1, text:'Ослабить болты колеса, поднять автомобиль, снять колесо.' },
+              { n:2, text:'Снять направляющие болты суппорта, поднять суппорт.' },
+              { n:3, text:'Извлечь старые колодки, очистить посадочные места.' },
+              { n:4, text:'Утопить поршень суппорта струбциной, установить новые колодки.', parts:[{ oem:'2123-3501080', name:'Колодки передние (2123)' }] },
+              { n:5, text:'Затянуть направляющие болты.', torque:'Направляющие суппорта: 32–38 Н·м' },
+              { n:6, text:'Прокачать педаль тормоза, проверить уровень жидкости.' }
+            ],
+            warnings:[
+              'После замены первые 200 км — щадящий режим торможения.',
+              'Проверить состояние тормозных дисков: минимальная толщина — 20 мм.'
+            ]
+          },
+          ...baseProcedures()
+        ],
+        diagrams:[DIAGRAM_TIMING_8V] })
+    ]}
+  ]
+}
+]};
+
+/* =========================================================
+   6. ИНДЕКСЫ
+   ========================================================= */
+const IDX = { family:{}, model:{}, mod:{} };
+DB.families.forEach(f => {
+  IDX.family[f.id] = f;
+  f.models.forEach(m => {
+    IDX.model[m.id] = { model:m, family:f };
+    m.mods.forEach(md => { IDX.mod[md.id] = { mod:md, model:m, family:f }; });
+  });
+});
+const allMods = () => DB.families.flatMap(f => f.models.flatMap(m => m.mods));
+const countModels = () => DB.families.reduce((a,f) => a + f.models.length, 0);
+const countProcs = () => allMods().reduce((a,m) => a + m.procedures.length, 0);
+const countDiagramPos = () => allMods().reduce((a,m) => a + m.diagrams.reduce((b,d) => b + d.positions.length, 0), 0);
+const countDocs = () => allMods().reduce((a,m) => a + m.docs.length, 0);
+
+/* =========================================================
+   7. РОУТЕР
+   ========================================================= */
+const app = $('#app');
+const crumbsEl = $('#crumbs .wrap');
+
+function parseHash() {
+  const raw = location.hash.replace(/^#/, '') || '/';
+  return raw.split('/').filter(Boolean);
+}
+
+function crumbs(items) {
+  const parts = [`<a href="#/">Каталог</a>`];
+  items.forEach((it, i) => {
+    parts.push('<span class="sep">/</span>');
+    parts.push(i === items.length - 1
+      ? `<span class="cur">${esc(it.label)}</span>`
+      : `<a href="${it.href}">${esc(it.label)}</a>`);
+  });
+  crumbsEl.innerHTML = parts.join('');
+}
+
+function route() {
+  const p = parseHash();
+  window.scrollTo({ top:0, behavior:'instant' });
+  if (p.length === 0)                       return renderHome();
+  if (p[0] === 'f' && IDX.family[p[1]])     return renderFamily(p[1]);
+  if (p[0] === 'm' && IDX.model[p[1]])      return renderModel(p[1]);
+  if (p[0] === 'x' && IDX.mod[p[1]])        return renderMod(p[1], p[2] || 'specs');
+  renderHome();
+}
+
+/* =========================================================
+   8. ГЛАВНАЯ
+   ========================================================= */
+function renderHome() {
+  crumbs([]);
+  app.innerHTML = `
+    <section class="hero">
+      <h1>Каталог автомобилей АвтоВАЗ</h1>
+      <p>Модели и модификации, регламент ТО, пошаговые техкарты с моментами затяжки, интерактивные взрыв-схемы и ссылки на архивы технической документации.</p>
+      <div class="stats">
+        <div><b>${DB.families.length}</b><span>семейств</span></div>
+        <div><b>${countModels()}</b><span>моделей</span></div>
+        <div><b>${allMods().length}</b><span>модификаций</span></div>
+        <div><b>${countProcs()}</b><span>техкарт</span></div>
+        <div><b>${countDiagramPos()}</b><span>позиций в схемах</span></div>
+        <div><b>${countDocs()}</b><span>ссылок на документацию</span></div>
+      </div>
+    </section>
+    <h2 class="section-title">Семейства</h2>
+    <div class="grid families">
+      ${DB.families.map(f => `
+        <a class="card fam" href="#/f/${f.id}">
+          <div class="fam-head">
+            <div class="fam-name">${esc(f.name)}</div>
+            <div class="fam-years">${esc(f.years)}</div>
+          </div>
+          <div class="fam-desc">${esc(f.desc)}</div>
+          <div class="chips">
+            ${f.models.map(m => `<span class="chip">${esc(m.name)}</span>`).join('')}
+          </div>
+        </a>`).join('')}
+    </div>`;
+}
+
+/* =========================================================
+   9. СЕМЕЙСТВО / МОДЕЛЬ
+   ========================================================= */
+function renderFamily(id) {
+  const f = IDX.family[id];
+  crumbs([{ label:f.name }]);
+  app.innerHTML = `
+    <h1>${esc(f.name)}</h1>
+    <p style="color:var(--muted);margin:0 0 22px">${esc(f.years)} · ${esc(f.desc)}</p>
+    <h2 class="section-title" style="margin-top:0">Модели</h2>
+    ${f.models.map(m => `
+      <a class="mod-row" href="#/m/${m.id}">
+        <div>
+          <div class="name">${esc(m.name)}</div>
+          <div class="sub">${esc(m.years)} · модификаций: ${m.mods.length}</div>
+        </div>
+        <span class="arrow">›</span>
+      </a>`).join('')}`;
+}
+
+function renderModel(id) {
+  const { model:m, family:f } = IDX.model[id];
+  crumbs([{ label:f.name, href:`#/f/${f.id}` }, { label:m.name }]);
+  app.innerHTML = `
+    <h1>${esc(m.name)}</h1>
+    <p style="color:var(--muted);margin:0 0 22px">${esc(f.name)} · ${esc(m.years)}</p>
+    <h2 class="section-title" style="margin-top:0">Выберите модификацию</h2>
+    ${m.mods.map(md => `
+      <a class="mod-row" href="#/x/${md.id}/specs">
+        <div>
+          <div class="name">${esc(md.name)}</div>
+          <div class="sub">${esc(md.engine.code)} · ${md.engine.power} л.с. · ${esc(md.body)}</div>
+        </div>
+        <span class="arrow">›</span>
+      </a>`).join('')}`;
+}
+
+/* =========================================================
+   10. МОДИФИКАЦИЯ
+   ========================================================= */
+const TABS = [
+  { id:'specs',   label:'Характеристики' },
+  { id:'to',      label:'Регламент ТО' },
+  { id:'repair',  label:'Ремонт' },
+  { id:'schemes', label:'Схемы и артикулы' }
+];
+
+let maintFilter = 'all';
+
+function renderMod(id, tab) {
+  const { mod:m, model:mdl, family:f } = IDX.mod[id];
+  crumbs([
+    { label:f.name, href:`#/f/${f.id}` },
+    { label:mdl.name, href:`#/m/${mdl.id}` },
+    { label:m.name }
+  ]);
+
+  app.innerHTML = `
+    <div class="mod-head">
+      <div class="tag">${esc(m.body)} · ${esc(m.years)}</div>
+      <h1 style="margin-bottom:4px">${esc(m.name)}</h1>
+      <div style="color:var(--muted);font-size:14px">${esc(f.name)} › ${esc(mdl.name)}</div>
+      <div class="quick">
+        <div><span>Двигатель</span><b>${esc(m.engine.code)}</b></div>
+        <div><span>Мощность</span><b>${m.engine.power} л.с.</b></div>
+        <div><span>Момент</span><b>${m.engine.torque} Н·м</b></div>
+        <div><span>КПП</span><b>${esc(m.transmission)}</b></div>
+        <div><span>Привод</span><b>${esc(m.drive)}</b></div>
+      </div>
+    </div>
+    <div class="tabs">
+      ${TABS.map(t => `<a class="tab ${t.id === tab ? 'active' : ''}" href="#/x/${m.id}/${t.id}">${t.label}</a>`).join('')}
+    </div>
+    <div id="tab-body"></div>`;
+
+  const body = $('#tab-body');
+  if (tab === 'to')           body.innerHTML = viewMaintenance(m);
+  else if (tab === 'repair')  body.innerHTML = viewProcedures(m);
+  else if (tab === 'schemes') body.innerHTML = viewSchemes(m);
+  else                        body.innerHTML = viewSpecs(m);
+
+  if (tab === 'to')     bindMaintenance();
+  if (tab === 'schemes') bindSchemes(m);
+}
+
+function viewSpecs(m) {
+  return `
+    <div class="cols">
+      <div class="card">
+        <h3>Общие характеристики</h3>
+        <table class="kv">
+          ${m.specs.map(s => `<tr><th>${esc(s.k)}</th><td>${esc(s.v)}</td></tr>`).join('')}
+        </table>
+      </div>
+      <div class="card">
+        <h3>Эксплуатационные жидкости</h3>
+        ${m.fluids.map(fl => `
+          <div class="fluid">
+            <div class="fluid-k">${esc(fl.k)}</div>
+            <div class="fluid-v">${esc(fl.v)}</div>
+            <div class="fluid-n">${esc(fl.n || '')}</div>
+          </div>`).join('')}
+      </div>
+    </div>
+    ${m.docs.length ? `
+      <div class="card docs-card">
+        <h3>📚 Техническая документация и архивы</h3>
+        ${m.docs.map(d => `
+          <a class="doc-row" href="${esc(d.url)}" target="_blank" rel="noopener">
+            <div class="doc-ico">📄</div>
+            <div class="doc-body">
+              <div class="doc-type">${esc(d.type)}</div>
+              <div class="doc-title">${esc(d.title)}</div>
+            </div>
+            <span class="doc-arrow">↗</span>
+          </a>`).join('')}
+      </div>` : ''}`;
+}
+
+const TYPE_LABEL = { replace:'Замена', check:'Проверка', adjust:'Регулировка' };
+
+function viewMaintenance(m) {
+  return `
+    <div class="filters">
+      ${[['all','Все операции'],['replace','Только замена'],['check','Проверки'],['adjust','Регулировки']]
+        .map(([k,l]) => `<button data-filter="${k}" class="${maintFilter===k?'active':''}">${l}</button>`).join('')}
+    </div>
+    <table class="data" id="maint-table">
+      <thead>
+        <tr><th>Операция</th><th>Пробег</th><th>Срок</th><th>Тип</th></tr>
+      </thead>
+      <tbody>
+        ${m.maintenance.map(row => `
+          <tr data-type="${row.type}" class="${row.critical ? 'critical' : ''}">
+            <td>
+              ${esc(row.op)}${row.critical ? '<span class="crit-badge">важно</span>' : ''}
+              ${row.note ? `<div style="font-size:12.5px;color:var(--muted);margin-top:4px">${esc(row.note)}</div>` : ''}
+            </td>
+            <td style="white-space:nowrap">${row.km ? row.km.toLocaleString('ru-RU') + ' км' : '—'}</td>
+            <td style="white-space:nowrap">${row.mo ? row.mo + ' мес.' : '—'}</td>
+            <td><span class="tag-type t-${row.type}">${TYPE_LABEL[row.type] || row.type}</span></td>
+          </tr>`).join('')}
+      </tbody>
+    </table>`;
+}
+
+function bindMaintenance() {
+  $$('.filters button').forEach(b => {
+    b.addEventListener('click', () => {
+      maintFilter = b.dataset.filter;
+      $$('.filters button').forEach(x => x.classList.toggle('active', x === b));
+      $$('#maint-table tbody tr').forEach(tr => {
+        tr.style.display = (maintFilter === 'all' || tr.dataset.type === maintFilter) ? '' : 'none';
+      });
+    });
+  });
+  if (maintFilter !== 'all') {
+    $$('#maint-table tbody tr').forEach(tr => {
+      tr.style.display = tr.dataset.type === maintFilter ? '' : 'none';
+    });
+  }
+}
+
+function levelClass(l) {
+  if (/сложн/i.test(l)) return 'hard';
+  if (/средн/i.test(l)) return 'mid';
+  return 'easy';
+}
+
+function viewProcedures(m) {
+  if (!m.procedures.length) return `<div class="empty">Техкарты для этой модификации пока не добавлены.</div>`;
+  return m.procedures.map((p, i) => `
+    <details class="proc" ${i === 0 ? 'open' : ''}>
+      <summary>
+        <span>${esc(p.title)}</span>
+        <span class="proc-meta">
+          <span class="pill">⏱ ${esc(p.time)}</span>
+          <span class="pill ${levelClass(p.level)}">${esc(p.level)}</span>
+        </span>
+      </summary>
+      <div class="proc-body">
+        <h4>Инструмент и приспособления</h4>
+        <div class="tool-chips">
+          ${p.tools.map(t => `<span class="tool-chip">${esc(t)}</span>`).join('')}
+        </div>
+        <h4>Порядок работ</h4>
+        <ol class="steps">
+          ${p.steps.map(s => `
+            <li>
+              <div class="step-text">${esc(s.text)}</div>
+              ${(s.torque || (s.parts && s.parts.length)) ? `
+                <div class="step-extra">
+                  ${s.torque ? `<span class="torque">🔧 ${esc(s.torque)}</span>` : ''}
+                  ${(s.parts || []).map(pt => `
+                    <button class="part-link" data-oem="${esc(pt.oem)}" data-name="${esc(pt.name)}">
+                      ${esc(pt.name)} · ${esc(pt.oem)}
+                    </button>`).join('')}
+                </div>` : ''}
+            </li>`).join('')}
+        </ol>
+        ${p.warnings && p.warnings.length ? `
+          <div class="warn">
+            <b>Подводные камни</b>
+            <ul>${p.warnings.map(w => `<li>${esc(w)}</li>`).join('')}</ul>
+          </div>` : ''}
+      </div>
+    </details>`).join('');
+}
+
+let activeDiag = 0;
+let selectedPos = null;
+
+function viewSchemes(m) {
+  if (!m.diagrams.length) return `<div class="empty">Взрыв-схемы для этой модификации пока не добавлены.</div>`;
+  if (activeDiag >= m.diagrams.length) activeDiag = 0;
+  const d = m.diagrams[activeDiag];
+  return `
+    ${m.diagrams.length > 1 ? `
+      <div class="diag-tabs">
+        ${m.diagrams.map((dd, i) => `<button class="diag-tab ${i === activeDiag ? 'active' : ''}" data-diag="${i}">${esc(dd.title)}</button>`).join('')}
+      </div>` : ''}
+
+    <div class="diagram-box">
+      ${diagramSVG(d)}
+      <div class="legend">
+        <span>Нажмите на номер на схеме или на строку таблицы — позиция подсветится.</span>
+      </div>
+    </div>
+
+    <table class="data parts" id="parts-table">
+      <thead>
+        <tr><th style="width:52px">№</th><th>Наименование</th><th>Каталожный номер</th><th style="width:70px">Кол-во</th><th style="width:120px"></th></tr>
+      </thead>
+      <tbody>
+        ${d.positions.slice().sort((a,b) => a.pos - b.pos).map(p => `
+          <tr data-pos="${p.pos}">
+            <td><span class="badge-cell">${p.pos}</span></td>
+            <td>${esc(p.name)}${p.note ? `<div style="font-size:12px;color:var(--muted)">${esc(p.note)}</div>` : ''}</td>
+            <td><span class="oem">${esc(p.oem)}</span></td>
+            <td>${p.qty}</td>
+            <td><button class="btn ghost" style="height:30px;padding:0 12px;font-size:12.5px" data-oem="${esc(p.oem)}" data-name="${esc(p.name)}">Подробнее</button></td>
+          </tr>`).join('')}
+      </tbody>
+    </table>`;
+}
+
+function diagramSVG(d) {
+  const sorted = [...d.positions].sort((a,b) => (a.z || 1) - (b.z || 1));
+  let body = `
+    <defs>
+      <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+        <path d="M40 0 L0 0 0 40" fill="none" stroke="#e8ebf0" stroke-width="1"/>
+      </pattern>
+    </defs>
+    <rect width="100%" height="100%" fill="url(#grid)"/>`;
+  sorted.forEach(p => {
+    const cls = `part-shape pos-${p.pos}`;
+    if (p.type === 'belt') {
+      body += `<polygon class="${cls}" points="${p.points}" fill="none" stroke="#3a4150" stroke-width="${p.width || 16}" stroke-linejoin="round" stroke-linecap="round"/>`;
+    } else if (p.type === 'circle') {
+      body += `<circle class="${cls}" cx="${p.cx}" cy="${p.cy}" r="${p.r}"/>`;
+      if (p.hole) {
+        body += `<circle cx="${p.cx}" cy="${p.cy}" r="${Math.round(p.r * 0.38)}" fill="#fbfcfe" stroke="#c8cedb" stroke-width="2" pointer-events="none"/>`;
+      }
+    } else if (p.type === 'rect') {
+      body += `<rect class="${cls}" x="${p.x}" y="${p.y}" width="${p.w}" height="${p.h}" rx="${p.rx || 10}"/>`;
+    }
+  });
+  d.positions.forEach(p => {
+    const [bx, by] = p.badge;
+    body += `
+      <g class="badge pos-${p.pos}" data-pos="${p.pos}" transform="translate(${bx},${by})">
+        <circle r="15"/>
+        <text y="5">${p.pos}</text>
+      </g>`;
+  });
+  return `<svg class="diagram" viewBox="${d.viewBox}" xmlns="http://www.w3.org/2000/svg">${body}</svg>`;
+}
+
+function selectPos(n) {
+  selectedPos = n;
+  $$('.part-shape').forEach(s => s.classList.remove('is-sel'));
+  $$('.badge').forEach(s => s.classList.remove('is-sel'));
+  $$('#parts-table tbody tr').forEach(s => s.classList.remove('is-sel'));
+  if (n == null) return;
+  $$('.pos-' + n).forEach(e => e.classList.add('is-sel'));
+  const row = $(`#parts-table tbody tr[data-pos="${n}"]`);
+  if (row) row.classList.add('is-sel');
+}
+
+function bindSchemes(m) {
+  selectedPos = null;
+  $$('.diag-tab').forEach(b => {
+    b.addEventListener('click', () => {
+      activeDiag = +b.dataset.diag;
+      renderMod(m.id, 'schemes');
+    });
+  });
+  $$('.badge, .part-shape').forEach(el => {
+    el.addEventListener('click', () => {
+      const n = +el.dataset.pos || +el.classList.toString().match(/pos-(\d+)/)[1];
+      selectPos(selectedPos === n ? null : n);
+    });
+  });
+  $$('#parts-table tbody tr').forEach(tr => {
+    tr.addEventListener('click', e => {
+      if (e.target.closest('button')) return;
+      const n = +tr.dataset.pos;
+      selectPos(selectedPos === n ? null : n);
+    });
+  });
+}
+
+/* =========================================================
+   11. МОДАЛЬНОЕ ОКНО ДЕТАЛИ
+   ========================================================= */
+const modal = $('#modal');
+const modalBody = $('#modal-body');
+
+function openPart(oem, name) {
+  const p = partInfo(oem, name);
+  modalBody.innerHTML = `
+    <div style="font-size:12px;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);margin-bottom:6px">Карточка детали</div>
+    <h2 style="margin:0 0 6px;font-size:19px">${esc(p.name)}</h2>
+    <div style="font-size:13px;color:var(--muted);margin-bottom:6px">Производитель: ${esc(p.brand)}</div>
+    <div class="poem">${esc(oem)}</div>
+    <h4 style="margin:0 0 8px;font-size:12.5px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted)">Кросс-номера аналогов</h4>
+    ${p.crosses.length
+      ? `<div class="cross-list">${p.crosses.map(c => `<div class="cross-item"><span>${esc(c)}</span><span>аналог</span></div>`).join('')}</div>`
+      : `<div style="color:var(--muted);font-size:13.5px;margin-bottom:10px">Аналоги не указаны — рекомендуется оригинал.</div>`}
+    <div style="display:flex;gap:16px;margin:18px 0 4px;font-size:14px">
+      <div><div style="font-size:12px;color:var(--muted)">Цена</div><b>${esc(p.price)}</b></div>
+      <div><div style="font-size:12px;color:var(--muted)">Наличие</div><b>${esc(p.stock)}</b></div>
+    </div>
+    <button class="btn" style="width:100%;justify-content:center;margin-top:18px" data-add="${esc(oem)}">Добавить в заказ</button>`;
+  modal.hidden = false;
+  document.body.style.overflow = 'hidden';
+}
+
+function closeModal() {
+  modal.hidden = true;
+  document.body.style.overflow = '';
+}
+
+/* =========================================================
+   12. ПОИСК
+   ========================================================= */
+const searchInput = $('#search');
+const searchBox = $('#search-results');
+
+function searchAll(q) {
+  q = q.trim().toLowerCase();
+  if (!q) return [];
+  const out = [];
+  DB.families.forEach(f => {
+    if (f.name.toLowerCase().includes(q)) out.push({ type:'Семейство', title:f.name, sub:f.years, href:`#/f/${f.id}` });
+    f.models.forEach(m => {
+      if (m.name.toLowerCase().includes(q)) out.push({ type:'Модель', title:m.name, sub:`${f.name} · ${m.years}`, href:`#/m/${m.id}` });
+      m.mods.forEach(md => {
+        const hay = `${md.name} ${md.engine.code} ${md.body} ${m.name}`.toLowerCase();
+        if (hay.includes(q)) out.push({ type:'Модификация', title:md.name, sub:`${m.name} · ${md.engine.code}`, href:`#/x/${md.id}/specs` });
+      });
+    });
+  });
+  Object.keys(PARTS).forEach(oem => {
+    const p = PARTS[oem];
+    if (oem.toLowerCase().includes(q) || p.name.toLowerCase().includes(q) ||
+        p.crosses.some(c => c.toLowerCase().includes(q))) {
+      out.push({ type:'Деталь', title:p.name, sub:oem, href:null, oem, name:p.name });
+    }
+  });
+  return out.slice(0, 14);
+}
+
+searchInput.addEventListener('input', () => {
+  const items = searchAll(searchInput.value);
+  if (!searchInput.value.trim()) { searchBox.classList.add('hidden'); return; }
+  if (!items.length) {
+    searchBox.innerHTML = `<div class="sr-empty">Ничего не найдено</div>`;
+    searchBox.classList.remove('hidden');
+    return;
+  }
+  searchBox.innerHTML = items.map((it, i) => `
+    <a class="sr-item" data-i="${i}" ${it.href ? `href="${it.href}"` : 'href="javascript:void(0)"'}>
+      <b>${esc(it.title)}</b>
+      <small>${esc(it.type)} · ${esc(it.sub)}</small>
+    </a>`).join('');
+  searchBox.classList.remove('hidden');
+  $$('.sr-item', searchBox).forEach(el => {
+    el.addEventListener('click', () => {
+      const it = items[+el.dataset.i];
+      if (it.oem) openPart(it.oem, it.name);
+      searchBox.classList.add('hidden');
+      searchInput.value = '';
+    });
+  });
+});
+
+searchInput.addEventListener('focus', () => {
+  if (searchInput.value.trim()) searchBox.classList.remove('hidden');
+});
+document.addEventListener('click', e => {
+  if (!e.target.closest('.search-wrap')) searchBox.classList.add('hidden');
+});
+
+/* =========================================================
+   13. ГЛОБАЛЬНЫЕ ОБРАБОТЧИКИ
+   ========================================================= */
+document.addEventListener('click', e => {
+  const partBtn = e.target.closest('[data-oem]');
+  if (partBtn && !partBtn.dataset.add) {
+    openPart(partBtn.dataset.oem, partBtn.dataset.name);
+    return;
+  }
+  if (e.target.closest('[data-close]')) closeModal();
+  const addBtn = e.target.closest('[data-add]');
+  if (addBtn) {
+    toast(`Деталь ${addBtn.dataset.add} добавлена в заказ`);
+    closeModal();
+  }
+});
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') closeModal();
+});
+
+let toastTimer;
+function toast(msg) {
+  const t = $('#toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 2200);
+}
+
+/* =========================================================
+   14. СТАРТ
+   ========================================================= */
+window.addEventListener('hashchange', route);
+route();
+</script>
+</body>
+</html>
